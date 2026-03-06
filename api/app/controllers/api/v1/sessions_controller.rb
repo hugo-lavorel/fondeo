@@ -29,15 +29,6 @@ module Api
       def session_params
         params.require(:session).permit(:email, :password)
       end
-
-      def user_json(user)
-        {
-          id: user.id,
-          email: user.email,
-          first_name: user.first_name,
-          last_name: user.last_name
-        }
-      end
     end
   end
 end

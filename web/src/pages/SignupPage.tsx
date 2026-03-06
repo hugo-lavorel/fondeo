@@ -37,7 +37,7 @@ export default function SignupPage() {
     setSubmitting(true);
     try {
       await signup(form);
-      navigate("/dashboard");
+      navigate("/onboarding");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Une erreur est survenue");
     } finally {

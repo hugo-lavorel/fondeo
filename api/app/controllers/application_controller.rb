@@ -10,4 +10,14 @@ class ApplicationController < ActionController::API
   def require_authentication
     render json: { error: "Unauthorized" }, status: :unauthorized unless current_user
   end
+
+  def user_json(user)
+    {
+      id: user.id,
+      email: user.email,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      has_company: user.company_id.present?
+    }
+  end
 end

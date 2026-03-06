@@ -10,11 +10,25 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_06_111526) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_06_115915) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
+  create_table "companies", force: :cascade do |t|
+    t.text "activity_description"
+    t.string "annual_revenue_range", null: false
+    t.datetime "created_at", null: false
+    t.string "employee_range", null: false
+    t.boolean "has_rd_team", default: false, null: false
+    t.string "name", null: false
+    t.string "sector", null: false
+    t.string "siren", limit: 9, null: false
+    t.datetime "updated_at", null: false
+    t.index ["siren"], name: "index_companies_on_siren", unique: true
+  end
+
   create_table "users", force: :cascade do |t|
+    t.bigint "company_id"
     t.datetime "created_at", null: false
     t.string "email", null: false
     t.integer "failed_login_attempts", default: 0, null: false
@@ -23,6 +37,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_06_111526) do
     t.datetime "locked_until"
     t.string "password_digest", null: false
     t.datetime "updated_at", null: false
+    t.index ["company_id"], name: "index_users_on_company_id"
     t.index ["email"], name: "index_users_on_email", unique: true
   end
+
+  add_foreign_key "users", "companies"
 end
