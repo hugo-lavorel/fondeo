@@ -200,7 +200,7 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div>
                 <Label htmlFor="has_rd_team" className="text-sm font-medium">
-                  Equipe R&D identifiee
+                  Equipe R&D
                 </Label>
                 <p className="text-xs text-muted-foreground">
                   Disposez-vous d'une equipe de recherche et developpement ?
