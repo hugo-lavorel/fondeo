@@ -33,12 +33,15 @@ export default function SettingsPage() {
     annual_revenue_range: "",
     has_rd_team: false,
   });
+  const [initialForm, setInitialForm] = useState(form);
+
+  const hasChanges = JSON.stringify(form) !== JSON.stringify(initialForm);
 
   useEffect(() => {
     getCompany()
       .then((c) => {
         setCompany(c);
-        setForm({
+        const formData = {
           name: c.name,
           siren: c.siren,
           activity_description: c.activity_description ?? "",
@@ -46,7 +49,9 @@ export default function SettingsPage() {
           employee_range: c.employee_range,
           annual_revenue_range: c.annual_revenue_range,
           has_rd_team: c.has_rd_team,
-        });
+        };
+        setForm(formData);
+        setInitialForm(formData);
       })
       .catch(() => setCompany(null))
       .finally(() => setLoading(false));
@@ -69,6 +74,17 @@ export default function SettingsPage() {
         activity_description: form.activity_description || undefined,
       });
       setCompany(updated);
+      const updatedForm = {
+        name: updated.name,
+        siren: updated.siren,
+        activity_description: updated.activity_description ?? "",
+        sector: updated.sector,
+        employee_range: updated.employee_range,
+        annual_revenue_range: updated.annual_revenue_range,
+        has_rd_team: updated.has_rd_team,
+      };
+      setForm(updatedForm);
+      setInitialForm(updatedForm);
       setSuccess(true);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Une erreur est survenue");
@@ -230,7 +246,7 @@ export default function SettingsPage() {
             <Button
               type="submit"
               className="bg-emerald-600 hover:bg-emerald-700"
-              disabled={saving}
+              disabled={saving || !hasChanges}
             >
               {saving ? "Enregistrement..." : "Enregistrer les modifications"}
             </Button>
