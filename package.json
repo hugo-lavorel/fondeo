@@ -1,0 +1,20 @@
+{
+  "name": "fondeo",
+  "version": "1.0.0",
+  "description": "Fondeo monorepo - Rails API + React Frontend",
+  "scripts": {
+    "dev": "npm run cleanup && concurrently -n api,web -c blue,green \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:api": "cd api && bundle exec rails server",
+    "dev:web": "cd web && npm run dev",
+    "cleanup": "bash -c 'if [ -f api/tmp/pids/server.pid ]; then kill -9 $(cat api/tmp/pids/server.pid) 2>/dev/null || true; rm -f api/tmp/pids/server.pid; fi'",
+    "setup": "npm run setup:api && npm run setup:web",
+    "setup:api": "cd api && bundle install && rails db:create db:migrate",
+    "setup:web": "cd web && npm install"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

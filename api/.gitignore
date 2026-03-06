@@ -1,0 +1,27 @@
+# Environment
+.env
+
+# Logs and temp
+log/*
+tmp/*
+!tmp/.keep
+!tmp/pids/.keep
+
+# Storage
+storage/*
+!storage/.keep
+
+# Credentials and secrets
+config/master.key
+config/credentials/*.key
+
+# Bundle
+.bundle/
+vendor/bundle/
+
+# Database
+db/*.sqlite3
+db/*.sqlite3-*
+
+# Assets
+public/assets/
