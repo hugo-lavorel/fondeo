@@ -7,6 +7,7 @@ Rails.application.routes.draw do
       get "me", to: "current_user#show"
 
       resource :company, only: [ :show, :create, :update ]
+      resources :projects
     end
   end
 

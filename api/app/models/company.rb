@@ -1,5 +1,6 @@
 class Company < ApplicationRecord
   has_many :users, dependent: :nullify
+  has_many :projects, dependent: :destroy
 
   SECTORS = %w[industry software biotech engineering other].freeze
   EMPLOYEE_RANGES = %w[lt_10 10_49 50_249 250_plus].freeze
