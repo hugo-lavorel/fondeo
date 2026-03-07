@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -13,10 +12,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getCompany, updateCompany, type Company } from "@/api/company";
-import { SECTORS, EMPLOYEE_RANGES, REVENUE_RANGES } from "@/lib/company-options";
+import { EMPLOYEE_RANGES, REVENUE_RANGES } from "@/lib/company-options";
 import { ApiError } from "@/api/client";
 import { CheckCircle2 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
+import NafCombobox from "@/components/NafCombobox";
 
 export default function SettingsPage() {
   const [company, setCompany] = useState<Company | null>(null);
@@ -28,10 +28,10 @@ export default function SettingsPage() {
     name: "",
     siren: "",
     activity_description: "",
-    sector: "",
+    naf_code: "",
+    naf_label: "",
     employee_range: "",
     annual_revenue_range: "",
-    has_rd_team: false,
   });
   const [initialForm, setInitialForm] = useState(form);
 
@@ -45,10 +45,10 @@ export default function SettingsPage() {
           name: c.name,
           siren: c.siren,
           activity_description: c.activity_description ?? "",
-          sector: c.sector,
+          naf_code: c.naf_code,
+          naf_label: c.naf_label,
           employee_range: c.employee_range,
           annual_revenue_range: c.annual_revenue_range,
-          has_rd_team: c.has_rd_team,
         };
         setForm(formData);
         setInitialForm(formData);
@@ -78,10 +78,10 @@ export default function SettingsPage() {
         name: updated.name,
         siren: updated.siren,
         activity_description: updated.activity_description ?? "",
-        sector: updated.sector,
+        naf_code: updated.naf_code,
+        naf_label: updated.naf_label,
         employee_range: updated.employee_range,
         annual_revenue_range: updated.annual_revenue_range,
-        has_rd_team: updated.has_rd_team,
       };
       setForm(updatedForm);
       setInitialForm(updatedForm);
@@ -160,19 +160,14 @@ export default function SettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="sector">Secteur d'activite</Label>
-              <Select value={form.sector} onValueChange={(v) => update("sector", v)}>
-                <SelectTrigger id="sector">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SECTORS.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>
-                      {s.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Code NAF</Label>
+              <NafCombobox
+                value={form.naf_code}
+                onSelect={(code, label) => {
+                  update("naf_code", code);
+                  update("naf_label", label);
+                }}
+              />
             </div>
 
             <div className="space-y-2">
@@ -211,22 +206,6 @@ export default function SettingsPage() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div>
-                <Label htmlFor="has_rd_team" className="text-sm font-medium">
-                  Equipe R&D
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  Disposez-vous d'une equipe de recherche et developpement ?
-                </p>
-              </div>
-              <Switch
-                id="has_rd_team"
-                checked={form.has_rd_team}
-                onCheckedChange={(v) => update("has_rd_team", v)}
-              />
             </div>
 
             <div className="space-y-2">

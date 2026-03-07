@@ -1,11 +1,3 @@
-export const SECTORS = [
-  { value: "industry", label: "Industrie" },
-  { value: "software", label: "Logiciel / IT" },
-  { value: "biotech", label: "Biotech / Medtech" },
-  { value: "engineering", label: "Ing\u00e9nierie" },
-  { value: "other", label: "Autre" },
-] as const;
-
 export const EMPLOYEE_RANGES = [
   { value: "lt_10", label: "< 10" },
   { value: "10_49", label: "10 - 49" },

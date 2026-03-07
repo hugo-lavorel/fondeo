@@ -5,20 +5,20 @@ export type Company = {
   name: string;
   siren: string;
   activity_description: string | null;
-  sector: string;
+  naf_code: string;
+  naf_label: string;
   employee_range: string;
   annual_revenue_range: string;
-  has_rd_team: boolean;
 };
 
 export type CreateCompanyParams = {
   name: string;
   siren: string;
   activity_description?: string;
-  sector: string;
+  naf_code: string;
+  naf_label: string;
   employee_range: string;
   annual_revenue_range: string;
-  has_rd_team: boolean;
 };
 
 export function createCompany(params: CreateCompanyParams) {

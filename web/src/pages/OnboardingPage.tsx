@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -17,7 +16,8 @@ import { Building2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { createCompany } from "@/api/company";
 import { ApiError } from "@/api/client";
-import { SECTORS, EMPLOYEE_RANGES, REVENUE_RANGES } from "@/lib/company-options";
+import { EMPLOYEE_RANGES, REVENUE_RANGES } from "@/lib/company-options";
+import NafCombobox from "@/components/NafCombobox";
 
 export default function OnboardingPage() {
   const { refreshUser } = useAuth();
@@ -28,10 +28,10 @@ export default function OnboardingPage() {
     name: "",
     siren: "",
     activity_description: "",
-    sector: "",
+    naf_code: "",
+    naf_label: "",
     employee_range: "",
     annual_revenue_range: "",
-    has_rd_team: false,
   });
 
   function update(field: string, value: string | boolean) {
@@ -41,6 +41,12 @@ export default function OnboardingPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
+
+    if (!form.naf_code) {
+      setError("Veuillez selectionner un code NAF");
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -102,19 +108,14 @@ export default function OnboardingPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="sector">Secteur d'activite</Label>
-              <Select value={form.sector} onValueChange={(v) => update("sector", v)} required>
-                <SelectTrigger id="sector">
-                  <SelectValue placeholder="Selectionnez un secteur" />
-                </SelectTrigger>
-                <SelectContent>
-                  {SECTORS.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>
-                      {s.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Code NAF</Label>
+              <NafCombobox
+                value={form.naf_code}
+                onSelect={(code, label) => {
+                  update("naf_code", code);
+                  update("naf_label", label);
+                }}
+              />
             </div>
 
             <div className="space-y-2">
@@ -155,22 +156,6 @@ export default function OnboardingPage() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div>
-                <Label htmlFor="has_rd_team" className="text-sm font-medium">
-                  Equipe R&D
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  Disposez-vous d'une equipe de recherche et developpement ?
-                </p>
-              </div>
-              <Switch
-                id="has_rd_team"
-                checked={form.has_rd_team}
-                onCheckedChange={(v) => update("has_rd_team", v)}
-              />
             </div>
 
             <div className="space-y-2">

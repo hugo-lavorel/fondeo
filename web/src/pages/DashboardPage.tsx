@@ -1,7 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +23,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { getCompany, type Company } from "@/api/company";
 import { getProjects, createProject, type Project } from "@/api/projects";
-import { labelFor, SECTORS, EMPLOYEE_RANGES, REVENUE_RANGES } from "@/lib/company-options";
+import { labelFor, EMPLOYEE_RANGES, REVENUE_RANGES } from "@/lib/company-options";
 import { ApiError } from "@/api/client";
 import {
   Building2,
@@ -103,19 +102,15 @@ function CompanyCards({ company }: { company: Company }) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Secteur
+              Activite (NAF)
             </CardTitle>
             <FlaskConical className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold">
-              {labelFor(SECTORS, company.sector)}
+            <div className="text-lg font-bold leading-tight">
+              {company.naf_label}
             </div>
-            {company.has_rd_team && (
-              <Badge variant="secondary" className="mt-1 text-xs">
-                Equipe R&D
-              </Badge>
-            )}
+            <p className="mt-1 text-xs text-muted-foreground">{company.naf_code}</p>
           </CardContent>
         </Card>
 
