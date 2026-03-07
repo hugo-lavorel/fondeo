@@ -8,6 +8,7 @@ import DashboardPage from "@/pages/DashboardPage"
 import OnboardingPage from "@/pages/OnboardingPage"
 import SettingsPage from "@/pages/SettingsPage"
 import ProjectPage from "@/pages/ProjectPage"
+import NewProjectPage from "@/pages/NewProjectPage"
 
 function App() {
   return (
@@ -30,6 +31,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projects/new"
+            element={
+              <ProtectedRoute>
+                <NewProjectPage />
               </ProtectedRoute>
             }
           />
