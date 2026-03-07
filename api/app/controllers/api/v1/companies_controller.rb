@@ -49,7 +49,8 @@ module Api
       def company_params
         params.require(:company).permit(
           :name, :siren, :activity_description, :naf_code, :naf_label,
-          :employee_range, :annual_revenue_range
+          :employee_range, :annual_revenue_range,
+          :street, :postal_code, :city, :department, :region
         )
       end
 
@@ -62,7 +63,12 @@ module Api
           naf_code: company.naf_code,
           naf_label: company.naf_label,
           employee_range: company.employee_range,
-          annual_revenue_range: company.annual_revenue_range
+          annual_revenue_range: company.annual_revenue_range,
+          street: company.street,
+          postal_code: company.postal_code,
+          city: company.city,
+          department: company.department,
+          region: company.region
         }
       end
     end

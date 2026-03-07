@@ -30,6 +30,7 @@ import {
   Users,
   TrendingUp,
   FlaskConical,
+  MapPin,
   Plus,
   FolderOpen,
 } from "lucide-react";
@@ -85,7 +86,7 @@ function CompanyCards({ company }: { company: Company }) {
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold">Votre entreprise</h2>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -113,6 +114,23 @@ function CompanyCards({ company }: { company: Company }) {
             <p className="mt-1 text-xs text-muted-foreground">{company.naf_code}</p>
           </CardContent>
         </Card>
+
+        {company.city && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Localisation
+              </CardTitle>
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-lg font-bold leading-tight">{company.city}</div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {company.department}, {company.region}
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">

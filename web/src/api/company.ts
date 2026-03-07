@@ -9,6 +9,11 @@ export type Company = {
   naf_label: string;
   employee_range: string;
   annual_revenue_range: string;
+  street: string | null;
+  postal_code: string | null;
+  city: string | null;
+  department: string | null;
+  region: string | null;
 };
 
 export type CreateCompanyParams = {
@@ -19,6 +24,11 @@ export type CreateCompanyParams = {
   naf_label: string;
   employee_range: string;
   annual_revenue_range: string;
+  street?: string;
+  postal_code?: string;
+  city?: string;
+  department?: string;
+  region?: string;
 };
 
 export function createCompany(params: CreateCompanyParams) {

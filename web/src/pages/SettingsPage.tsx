@@ -17,6 +17,7 @@ import { ApiError } from "@/api/client";
 import { CheckCircle2 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 import NafCombobox from "@/components/NafCombobox";
+import AddressAutocomplete, { type AddressResult } from "@/components/AddressAutocomplete";
 
 export default function SettingsPage() {
   const [company, setCompany] = useState<Company | null>(null);
@@ -30,6 +31,11 @@ export default function SettingsPage() {
     activity_description: "",
     naf_code: "",
     naf_label: "",
+    street: "",
+    postal_code: "",
+    city: "",
+    department: "",
+    region: "",
     employee_range: "",
     annual_revenue_range: "",
   });
@@ -47,6 +53,11 @@ export default function SettingsPage() {
           activity_description: c.activity_description ?? "",
           naf_code: c.naf_code,
           naf_label: c.naf_label,
+          street: c.street ?? "",
+          postal_code: c.postal_code ?? "",
+          city: c.city ?? "",
+          department: c.department ?? "",
+          region: c.region ?? "",
           employee_range: c.employee_range,
           annual_revenue_range: c.annual_revenue_range,
         };
@@ -72,6 +83,11 @@ export default function SettingsPage() {
       const updated = await updateCompany({
         ...form,
         activity_description: form.activity_description || undefined,
+        street: form.street || undefined,
+        postal_code: form.postal_code || undefined,
+        city: form.city || undefined,
+        department: form.department || undefined,
+        region: form.region || undefined,
       });
       setCompany(updated);
       const updatedForm = {
@@ -80,6 +96,11 @@ export default function SettingsPage() {
         activity_description: updated.activity_description ?? "",
         naf_code: updated.naf_code,
         naf_label: updated.naf_label,
+        street: updated.street ?? "",
+        postal_code: updated.postal_code ?? "",
+        city: updated.city ?? "",
+        department: updated.department ?? "",
+        region: updated.region ?? "",
         employee_range: updated.employee_range,
         annual_revenue_range: updated.annual_revenue_range,
       };
@@ -157,6 +178,29 @@ export default function SettingsPage() {
                 maxLength={11}
                 required
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Adresse du siege social</Label>
+              <AddressAutocomplete
+                value={form.street ? `${form.street}, ${form.postal_code} ${form.city}` : ""}
+                onSelect={(addr: AddressResult) => {
+                  setForm((prev) => ({
+                    ...prev,
+                    street: addr.street,
+                    postal_code: addr.postal_code,
+                    city: addr.city,
+                    department: addr.department,
+                    region: addr.region,
+                  }));
+                  setSuccess(false);
+                }}
+              />
+              {form.city && (
+                <p className="text-xs text-muted-foreground">
+                  {form.postal_code} {form.city} — {form.department}, {form.region}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">

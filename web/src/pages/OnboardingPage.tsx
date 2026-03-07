@@ -18,6 +18,7 @@ import { createCompany } from "@/api/company";
 import { ApiError } from "@/api/client";
 import { EMPLOYEE_RANGES, REVENUE_RANGES } from "@/lib/company-options";
 import NafCombobox from "@/components/NafCombobox";
+import AddressAutocomplete, { type AddressResult } from "@/components/AddressAutocomplete";
 
 export default function OnboardingPage() {
   const { refreshUser } = useAuth();
@@ -30,6 +31,11 @@ export default function OnboardingPage() {
     activity_description: "",
     naf_code: "",
     naf_label: "",
+    street: "",
+    postal_code: "",
+    city: "",
+    department: "",
+    region: "",
     employee_range: "",
     annual_revenue_range: "",
   });
@@ -53,6 +59,11 @@ export default function OnboardingPage() {
       await createCompany({
         ...form,
         activity_description: form.activity_description || undefined,
+        street: form.street || undefined,
+        postal_code: form.postal_code || undefined,
+        city: form.city || undefined,
+        department: form.department || undefined,
+        region: form.region || undefined,
       });
       await refreshUser();
       navigate("/dashboard");
@@ -105,6 +116,28 @@ export default function OnboardingPage() {
                 required
               />
               <p className="text-xs text-muted-foreground">9 chiffres, disponible sur votre Kbis</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Adresse du siege social</Label>
+              <AddressAutocomplete
+                value={form.street ? `${form.street}, ${form.postal_code} ${form.city}` : ""}
+                onSelect={(addr: AddressResult) => {
+                  setForm((prev) => ({
+                    ...prev,
+                    street: addr.street,
+                    postal_code: addr.postal_code,
+                    city: addr.city,
+                    department: addr.department,
+                    region: addr.region,
+                  }));
+                }}
+              />
+              {form.city && (
+                <p className="text-xs text-muted-foreground">
+                  {form.postal_code} {form.city} — {form.department}, {form.region}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">

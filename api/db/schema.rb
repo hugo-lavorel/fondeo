@@ -10,19 +10,24 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_07_074715) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_07_080207) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
   create_table "companies", force: :cascade do |t|
     t.text "activity_description"
     t.string "annual_revenue_range", null: false
+    t.string "city"
     t.datetime "created_at", null: false
+    t.string "department"
     t.string "employee_range", null: false
     t.string "naf_code", limit: 6, null: false
     t.string "naf_label", null: false
     t.string "name", null: false
+    t.string "postal_code"
+    t.string "region"
     t.string "siren", limit: 9, null: false
+    t.string "street"
     t.datetime "updated_at", null: false
     t.index ["naf_code"], name: "index_companies_on_naf_code"
     t.index ["siren"], name: "index_companies_on_siren", unique: true
