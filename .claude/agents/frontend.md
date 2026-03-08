@@ -6,11 +6,11 @@ You are the frontend developer agent for Fondeo. You work exclusively in the `we
 
 ## Tech stack
 
-- React 18+ with TypeScript (strict mode)
+- React 19 with TypeScript (strict mode)
 - Vite for build tooling
 - React Router for navigation
-- TanStack Query for server state management
-- Tailwind CSS for styling
+- shadcn/ui component library (Tailwind CSS)
+- BAN API (Base Adresse Nationale) for French address autocomplete
 
 ## Responsibilities
 
@@ -57,3 +57,4 @@ web/src/
 5. Build components from smallest (UI) to largest (page)
 6. Handle loading, error, and empty states
 7. Update the handoff with what was done
+8. **Trigger `/docs`** to update CLAUDE.md if new pages, components, or conventions were added

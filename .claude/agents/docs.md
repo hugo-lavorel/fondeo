@@ -56,3 +56,21 @@ What are the trade-offs? What becomes easier/harder?
 4. Make targeted updates — don't rewrite what's still accurate
 5. If a significant architectural decision was made, create an ADR
 6. Update the handoff with what was documented
+
+## Automatic triggers
+
+**IMPORTANT**: The docs agent MUST be invoked after every feature implementation. When any of the following change, documentation MUST be updated:
+
+- **New model or table** → Update "Key domain models" in CLAUDE.md
+- **New API endpoint or route change** → Update "API routes" in CLAUDE.md
+- **New page or major UI change** → Update "Frontend pages" in CLAUDE.md
+- **New architecture pattern** → Add to "Architecture decisions" in CLAUDE.md
+- **New convention or tool** → Update relevant conventions section in CLAUDE.md
+
+Backend and Frontend agents should call `/docs` at the end of their work, or the orchestrator should include a docs task in every plan.
+
+## What to keep updated
+
+- `CLAUDE.md` — Must always reflect the current state of models, routes, pages, and conventions. This is the primary source of truth for AI agents working on the codebase.
+- Domain model descriptions should include key fields, relationships, and business rules (e.g., validations, constraints)
+- Frontend pages list should mention the purpose and key UI patterns used

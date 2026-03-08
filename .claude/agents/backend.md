@@ -53,3 +53,4 @@ api/
 5. Build the controller and routes
 6. Verify manually that the endpoint works
 7. Update the handoff with what was done and any decisions made
+8. **Trigger `/docs`** to update CLAUDE.md if new models, routes, or conventions were added

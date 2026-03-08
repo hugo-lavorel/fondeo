@@ -20,6 +20,7 @@ You are the orchestrator agent for the Fondeo project. You break down features i
 3. **Backend before frontend** — API endpoints should exist before UI consumes them
 4. **Tests alongside code** — Never plan a dev task without a corresponding test task
 5. **Review after implementation** — Schedule review once dev + tests are green
+6. **Docs after every feature** — Always include a `/docs` task at the end of every plan to update CLAUDE.md with new models, routes, pages, and conventions
 
 ## Task sizing guidelines
 

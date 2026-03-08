@@ -2,7 +2,7 @@
 
 ## Project overview
 
-Fondeo is a SaaS that helps businesses discover and apply for public subsidies. Monorepo with a Rails API backend and a React TypeScript frontend.
+Fondeo is a SaaS that helps businesses in the agro-food sector discover and apply for public subsidies. Monorepo with a Rails API backend and a React TypeScript frontend.
 
 ## Repository structure
 
@@ -37,25 +37,58 @@ Subsidies have structured eligibility rules stored in an `eligibility_rules` tab
 
 This allows automatic matching of projects/companies against subsidies via SQL queries.
 
+### Project data architecture
+
+Project data is stored in flat columns on the `projects` table (for AI-queryable structured data) plus separate tables for nested concerns:
+- `project_permits` — optional 1:1 building permit block, managed via `accepts_nested_attributes_for` with `_destroy` support
+- `expenses` — project cost items with investment type, financing details, and timeline dates
+- `process_items` — production process inputs/outputs with customs codes, percentages (sum ≤ 100% per direction), and certifications (JSONB array)
+
 ### API conventions
 
 - Rails API-only mode (no views, no asset pipeline)
 - PostgreSQL with JSONB for flexible data
-- RESTful JSON API
+- Cookie-based session authentication (14-day expiry, httponly, SameSite=Lax)
+- RESTful JSON API under `/api/v1/`
+
+### API routes
+
+```
+POST   /api/v1/signup, login, DELETE logout, GET me
+GET/POST /api/v1/company (singular resource)
+CRUD   /api/v1/projects
+CRUD   /api/v1/projects/:id/expenses
+CRUD   /api/v1/projects/:id/process_items
+```
 
 ### Frontend conventions
 
-- React with TypeScript (strict mode)
+- React 19 with TypeScript (strict mode)
 - Vite for build tooling
+- shadcn/ui component library (Tailwind CSS)
+- BAN API (Base Adresse Nationale) for French address autocomplete — free, no API key
+
+### Frontend pages
+
+- `LandingPage` — Public landing
+- `LoginPage` / `SignupPage` — Authentication
+- `OnboardingPage` — Company creation with NAF code autocomplete and address autocomplete
+- `DashboardPage` — Company info cards + project grid (cards with expense summaries)
+- `SettingsPage` — Company edit form
+- `NewProjectPage` — Multi-step project creation (4 steps: General, Location & Contact, Conditionnement, Immobilier)
+- `ProjectPage` — Full project view with editable sections (hover-reveal edit buttons), expense table, process items (inputs/outputs)
 
 ## Key domain models
 
-- **User** — Authentication and account
-- **Company** — Business entity (sector, size, location, SIRET, revenue, legal form, etc.)
-- **Project** — Initiative within a company seeking funding
-- **Subsidy** — Public funding opportunity (source level, deadlines, amounts, required documents)
-- **EligibilityRule** — Structured criterion linked to a subsidy for automatic matching
-- **Application** — Generated dossier for a specific subsidy + project combination
+- **User** — Authentication (cookie-based sessions) and account
+- **Company** — Business entity (name, SIREN, NAF code, sector, employee range, revenue range, legal form, address with street/postal_code/city/department/region)
+- **Project** — Initiative within a company seeking funding (name, objective, process_before/process_after descriptions, location fields, contact person, building permit flag)
+- **ProjectPermit** — Optional building permit details (belongs_to project; submission date, is_extension, area_sqm, usage, works dates/duration). Managed via `accepts_nested_attributes_for`
+- **Expense** — Project cost item (name, amount HT, investment_type, financing_type with conditional loan fields, quotes_count, quote/works/commissioning dates). Investment types: building, equipment, software, consulting, training, r_and_d. Financing types: self_funded, loan, leasing (leasing expenses are not subsidy-eligible)
+- **ProcessItem** — Production process input/output (belongs_to project; direction input/output, name, customs_code, percentage, certifications as JSONB array). Total percentage per direction is validated to not exceed 100%
+- **Subsidy** — Public funding opportunity (source level, deadlines, amounts, required documents) *(planned)*
+- **EligibilityRule** — Structured criterion linked to a subsidy for automatic matching *(planned)*
+- **Application** — Generated dossier for a specific subsidy + project combination *(planned)*
 
 ## Code style
 
