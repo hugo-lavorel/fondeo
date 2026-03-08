@@ -1,15 +1,7 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { useAuth } from "@/hooks/useAuth";
 import { getCompany, type Company } from "@/api/company";
 import { getProjects, type Project } from "@/api/projects";
@@ -22,6 +14,11 @@ import {
   MapPin,
   Plus,
   FolderOpen,
+  Euro,
+  ArrowRight,
+  CalendarDays,
+  Building,
+  User,
 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 
@@ -159,8 +156,15 @@ function NewProjectButton() {
   );
 }
 
+function formatCurrency(amount: number) {
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
 function ProjectsSection({ projects }: { projects: Project[] }) {
-  const navigate = useNavigate();
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -180,35 +184,88 @@ function ProjectsSection({ projects }: { projects: Project[] }) {
           </CardContent>
         </Card>
       ) : (
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nom</TableHead>
-                <TableHead className="hidden sm:table-cell">Objectif</TableHead>
-                <TableHead className="hidden md:table-cell">Date de creation</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {projects.map((project) => (
-                <TableRow
-                  key={project.id}
-                  className="cursor-pointer"
-                  onClick={() => navigate(`/projects/${project.id}`)}
-                >
-                  <TableCell className="font-medium">{project.name}</TableCell>
-                  <TableCell className="hidden max-w-xs truncate text-muted-foreground sm:table-cell">
-                    {project.objective || "—"}
-                  </TableCell>
-                  <TableCell className="hidden text-muted-foreground md:table-cell">
-                    {new Date(project.created_at).toLocaleDateString("fr-FR")}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {projects.map((project) => (
+            <ProjectCard key={project.id} project={project} />
+          ))}
+        </div>
       )}
     </div>
+  );
+}
+
+function ProjectCard({ project }: { project: Project }) {
+  const locationLabel = project.location_is_headquarters
+    ? "Siege social"
+    : project.location_city
+      ? `${project.location_city}${project.location_department ? ` (${project.location_department})` : ""}`
+      : null;
+
+  return (
+    <Link to={`/projects/${project.id}`} className="block">
+      <Card className="group h-full transition-colors hover:border-emerald-300 hover:shadow-md">
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between gap-2">
+            <CardTitle className="text-base leading-tight">{project.name}</CardTitle>
+            <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+          </div>
+          {project.objective && (
+            <p className="line-clamp-2 text-sm text-muted-foreground">
+              {project.objective}
+            </p>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {/* Expenses summary */}
+          <div className="flex items-center gap-4 rounded-lg bg-muted/50 px-3 py-2">
+            <Euro className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <div className="min-w-0 flex-1">
+              {project.total_expenses > 0 ? (
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-sm font-semibold">
+                    {formatCurrency(project.total_expenses)}
+                  </span>
+                  {project.total_eligible_expenses > 0 && project.total_eligible_expenses !== project.total_expenses && (
+                    <span className="text-xs text-emerald-600">
+                      {formatCurrency(project.total_eligible_expenses)} eligible
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <span className="text-sm text-muted-foreground">Aucune depense</span>
+              )}
+            </div>
+          </div>
+
+          {/* Meta info */}
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            {locationLabel && (
+              <span className="flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                {locationLabel}
+              </span>
+            )}
+            {project.contact_first_name && (
+              <span className="flex items-center gap-1">
+                <User className="h-3 w-3" />
+                {project.contact_first_name} {project.contact_last_name}
+              </span>
+            )}
+            {project.needs_building_permit && (
+              <span className="flex items-center gap-1">
+                <Building className="h-3 w-3" />
+                Permis de construire
+              </span>
+            )}
+          </div>
+
+          {/* Date */}
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <CalendarDays className="h-3 w-3" />
+            Cree le {new Date(project.created_at).toLocaleDateString("fr-FR")}
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
