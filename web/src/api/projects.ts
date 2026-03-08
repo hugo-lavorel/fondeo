@@ -27,6 +27,9 @@ export type Project = {
   contact_role: string | null;
   needs_building_permit: boolean;
   permit: ProjectPermit | null;
+  total_expenses: number;
+  total_eligible_expenses: number;
+  total_leasing_expenses: number;
   created_at: string;
 };
 
@@ -79,4 +82,50 @@ export function updateProject(id: number, params: Partial<CreateProjectParams>) 
 
 export function deleteProject(id: number) {
   return api<void>(`/api/v1/projects/${id}`, { method: "DELETE" });
+}
+
+// Expenses
+
+export type FinancingType = "self_funded" | "loan" | "leasing";
+
+export type Expense = {
+  id: number;
+  name: string;
+  amount: number;
+  financing_type: FinancingType;
+  loan_rate: number | null;
+  loan_first_payment_date: string | null;
+  created_at: string;
+};
+
+export type CreateExpenseParams = {
+  name: string;
+  amount: number;
+  financing_type: FinancingType;
+  loan_rate?: number;
+  loan_first_payment_date?: string;
+};
+
+export function getExpenses(projectId: number) {
+  return api<Expense[]>(`/api/v1/projects/${projectId}/expenses`);
+}
+
+export function createExpense(projectId: number, params: CreateExpenseParams) {
+  return api<Expense>(`/api/v1/projects/${projectId}/expenses`, {
+    method: "POST",
+    body: { expense: params },
+  });
+}
+
+export function updateExpense(projectId: number, expenseId: number, params: Partial<CreateExpenseParams>) {
+  return api<Expense>(`/api/v1/projects/${projectId}/expenses/${expenseId}`, {
+    method: "PATCH",
+    body: { expense: params },
+  });
+}
+
+export function deleteExpense(projectId: number, expenseId: number) {
+  return api<void>(`/api/v1/projects/${projectId}/expenses/${expenseId}`, {
+    method: "DELETE",
+  });
 }

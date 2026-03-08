@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_07_084123) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_08_092723) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -31,6 +31,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_07_084123) do
     t.datetime "updated_at", null: false
     t.index ["naf_code"], name: "index_companies_on_naf_code"
     t.index ["siren"], name: "index_companies_on_siren", unique: true
+  end
+
+  create_table "expenses", force: :cascade do |t|
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.datetime "created_at", null: false
+    t.string "financing_type", default: "self_funded", null: false
+    t.date "loan_first_payment_date"
+    t.decimal "loan_rate", precision: 5, scale: 2
+    t.string "name", null: false
+    t.bigint "project_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["project_id"], name: "index_expenses_on_project_id"
   end
 
   create_table "project_permits", force: :cascade do |t|
@@ -81,6 +93,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_07_084123) do
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
+  add_foreign_key "expenses", "projects"
   add_foreign_key "project_permits", "projects"
   add_foreign_key "projects", "companies"
   add_foreign_key "users", "companies"

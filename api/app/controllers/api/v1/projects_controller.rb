@@ -10,7 +10,7 @@ module Api
       end
 
       def show
-        project = current_company.projects.includes(:permit).find(params[:id])
+        project = current_company.projects.includes(:permit, :expenses).find(params[:id])
         render json: project_json(project)
       end
 
@@ -85,6 +85,9 @@ module Api
           contact_role: project.contact_role,
           needs_building_permit: project.needs_building_permit,
           permit: nil,
+          total_expenses: project.expenses.sum(:amount).to_f,
+          total_eligible_expenses: project.expenses.where.not(financing_type: "leasing").sum(:amount).to_f,
+          total_leasing_expenses: project.expenses.where(financing_type: "leasing").sum(:amount).to_f,
           created_at: project.created_at
         }
 

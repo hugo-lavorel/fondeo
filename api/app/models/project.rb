@@ -1,6 +1,7 @@
 class Project < ApplicationRecord
   belongs_to :company
   has_one :permit, class_name: "ProjectPermit", dependent: :destroy
+  has_many :expenses, dependent: :destroy
 
   validates :name, presence: true
 
