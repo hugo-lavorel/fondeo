@@ -49,12 +49,14 @@ export type CreateProjectParams = {
   contact_role?: string;
   needs_building_permit?: boolean;
   permit_attributes?: {
+    id?: number;
     permit_submission_date?: string;
     is_extension?: boolean;
     area_sqm?: number;
     usage_description?: string;
     works_start_date?: string;
     works_duration_months?: number;
+    _destroy?: boolean;
   };
 };
 

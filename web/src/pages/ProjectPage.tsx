@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -28,6 +30,7 @@ import {
 import {
   getProject,
   deleteProject,
+  updateProject,
   getExpenses,
   createExpense,
   updateExpense,
@@ -35,7 +38,9 @@ import {
   type Project,
   type Expense,
   type FinancingType,
+  type CreateProjectParams,
 } from "@/api/projects";
+import { getCompany, type Company } from "@/api/company";
 import { ApiError } from "@/api/client";
 import {
   ArrowLeft,
@@ -49,7 +54,9 @@ import {
   Plus,
   Euro,
   AlertTriangle,
+  Pencil,
 } from "lucide-react";
+import AddressAutocomplete, { type AddressResult } from "@/components/AddressAutocomplete";
 import AppLayout from "@/components/AppLayout";
 
 const FINANCING_LABELS: Record<FinancingType, string> = {
@@ -65,24 +72,29 @@ function formatCurrency(amount: number) {
   }).format(amount);
 }
 
+type EditSection = "general" | "location" | "contact" | "permit" | null;
+
 export default function ProjectPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
+  const [company, setCompany] = useState<Company | null>(null);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [editSection, setEditSection] = useState<EditSection>(null);
 
   const projectId = Number(id);
 
   useEffect(() => {
     if (!id) return;
-    Promise.all([getProject(projectId), getExpenses(projectId)])
-      .then(([p, e]) => {
+    Promise.all([getProject(projectId), getExpenses(projectId), getCompany()])
+      .then(([p, e, c]) => {
         setProject(p);
         setExpenses(e);
+        setCompany(c);
       })
       .catch(() => navigate("/dashboard"))
       .finally(() => setLoading(false));
@@ -121,12 +133,10 @@ export default function ProjectPage() {
 
   function handleExpenseSaved(expense: Expense, previous?: Expense) {
     if (previous) {
-      // Update
       setExpenses((prev) => prev.map((e) => (e.id === expense.id ? expense : e)));
       updateTotals(previous.amount, previous.financing_type, -1);
       updateTotals(expense.amount, expense.financing_type, 1);
     } else {
-      // Create
       setExpenses((prev) => [expense, ...prev]);
       updateTotals(expense.amount, expense.financing_type, 1);
     }
@@ -142,6 +152,11 @@ export default function ProjectPage() {
     } catch {
       // ignore
     }
+  }
+
+  function handleProjectUpdated(updated: Project) {
+    setProject(updated);
+    setEditSection(null);
   }
 
   if (loading) {
@@ -188,11 +203,12 @@ export default function ProjectPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Objectif */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
+        <Card className="group lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Objectif
             </CardTitle>
+            <EditButton onClick={() => setEditSection("general")} />
           </CardHeader>
           <CardContent>
             <p className="text-sm whitespace-pre-wrap">
@@ -202,12 +218,15 @@ export default function ProjectPage() {
         </Card>
 
         {/* Localisation */}
-        <Card>
-          <CardHeader className="flex flex-row items-center gap-2">
-            <MapPin className="h-4 w-4 text-muted-foreground" />
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Localisation
-            </CardTitle>
+        <Card className="group">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Localisation
+              </CardTitle>
+            </div>
+            <EditButton onClick={() => setEditSection("location")} />
           </CardHeader>
           <CardContent>
             {project.location_is_headquarters ? (
@@ -229,12 +248,15 @@ export default function ProjectPage() {
         </Card>
 
         {/* Contact */}
-        <Card>
-          <CardHeader className="flex flex-row items-center gap-2">
-            <User className="h-4 w-4 text-muted-foreground" />
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Personne referente
-            </CardTitle>
+        <Card className="group">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <User className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Personne referente
+              </CardTitle>
+            </div>
+            <EditButton onClick={() => setEditSection("contact")} />
           </CardHeader>
           <CardContent>
             {project.contact_first_name ? (
@@ -265,12 +287,15 @@ export default function ProjectPage() {
         </Card>
 
         {/* Permis de construire */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center gap-2">
-            <Building className="h-4 w-4 text-muted-foreground" />
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Immobilier
-            </CardTitle>
+        <Card className="group lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Building className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Immobilier
+              </CardTitle>
+            </div>
+            <EditButton onClick={() => setEditSection("permit")} />
           </CardHeader>
           <CardContent>
             {!project.needs_building_permit ? (
@@ -439,6 +464,7 @@ export default function ProjectPage() {
             </p>
           </CardContent>
         </Card>
+
         <ExpenseDialog
           projectId={project.id}
           open={expenseDialogOpen}
@@ -446,10 +472,464 @@ export default function ProjectPage() {
           expense={editingExpense}
           onSaved={handleExpenseSaved}
         />
+
+        <EditGeneralDialog
+          project={project}
+          open={editSection === "general"}
+          onOpenChange={(o) => !o && setEditSection(null)}
+          onSaved={handleProjectUpdated}
+        />
+        <EditLocationDialog
+          project={project}
+          company={company}
+          open={editSection === "location"}
+          onOpenChange={(o) => !o && setEditSection(null)}
+          onSaved={handleProjectUpdated}
+        />
+        <EditContactDialog
+          project={project}
+          open={editSection === "contact"}
+          onOpenChange={(o) => !o && setEditSection(null)}
+          onSaved={handleProjectUpdated}
+        />
+        <EditPermitDialog
+          project={project}
+          open={editSection === "permit"}
+          onOpenChange={(o) => !o && setEditSection(null)}
+          onSaved={handleProjectUpdated}
+        />
       </div>
     </AppLayout>
   );
 }
+
+// ---- Shared ----
+
+function EditButton({ onClick }: { onClick: () => void }) {
+  return (
+    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" onClick={onClick}>
+      <Pencil className="h-3.5 w-3.5" />
+    </Button>
+  );
+}
+
+// ---- Edit General (name + objective) ----
+
+function EditGeneralDialog({
+  project,
+  open,
+  onOpenChange,
+  onSaved,
+}: {
+  project: Project;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSaved: (p: Project) => void;
+}) {
+  const [name, setName] = useState("");
+  const [objective, setObjective] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setName(project.name);
+      setObjective(project.objective ?? "");
+      setError("");
+    }
+  }, [open, project]);
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+    setSubmitting(true);
+    try {
+      const updated = await updateProject(project.id, {
+        name,
+        objective: objective || undefined,
+      });
+      onSaved(updated);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Une erreur est survenue");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Modifier le projet</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && <FormError message={error} />}
+          <div className="space-y-2">
+            <Label htmlFor="edit-name">Nom du projet</Label>
+            <Input
+              id="edit-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-objective">Objectif</Label>
+            <Textarea
+              id="edit-objective"
+              value={objective}
+              onChange={(e) => setObjective(e.target.value)}
+              rows={5}
+            />
+          </div>
+          <DialogFooterButtons onCancel={() => onOpenChange(false)} submitting={submitting} />
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---- Edit Location ----
+
+function EditLocationDialog({
+  project,
+  company,
+  open,
+  onOpenChange,
+  onSaved,
+}: {
+  project: Project;
+  company: Company | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSaved: (p: Project) => void;
+}) {
+  const [isHQ, setIsHQ] = useState(true);
+  const [street, setStreet] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [city, setCity] = useState("");
+  const [department, setDepartment] = useState("");
+  const [region, setRegion] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setIsHQ(project.location_is_headquarters);
+      setStreet(project.location_street ?? "");
+      setPostalCode(project.location_postal_code ?? "");
+      setCity(project.location_city ?? "");
+      setDepartment(project.location_department ?? "");
+      setRegion(project.location_region ?? "");
+      setError("");
+    }
+  }, [open, project]);
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+    setSubmitting(true);
+    try {
+      const params: Partial<CreateProjectParams> = {
+        location_is_headquarters: isHQ,
+      };
+      if (!isHQ) {
+        params.location_street = street || undefined;
+        params.location_postal_code = postalCode || undefined;
+        params.location_city = city || undefined;
+        params.location_department = department || undefined;
+        params.location_region = region || undefined;
+      }
+      const updated = await updateProject(project.id, params);
+      onSaved(updated);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Une erreur est survenue");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Modifier la localisation</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && <FormError message={error} />}
+          <div className="flex items-center justify-between rounded-lg border p-3">
+            <div>
+              <Label htmlFor="edit-hq" className="text-sm font-medium">
+                Au siege social
+              </Label>
+              {company?.city && (
+                <p className="text-xs text-muted-foreground">
+                  {company.street}, {company.postal_code} {company.city}
+                </p>
+              )}
+            </div>
+            <Switch id="edit-hq" checked={isHQ} onCheckedChange={setIsHQ} />
+          </div>
+          {!isHQ && (
+            <div className="space-y-2">
+              <Label>Adresse du projet</Label>
+              <AddressAutocomplete
+                value={street ? `${street}, ${postalCode} ${city}` : ""}
+                onSelect={(addr: AddressResult) => {
+                  setStreet(addr.street);
+                  setPostalCode(addr.postal_code);
+                  setCity(addr.city);
+                  setDepartment(addr.department);
+                  setRegion(addr.region);
+                }}
+              />
+              {city && (
+                <p className="text-xs text-muted-foreground">
+                  {postalCode} {city} — {department}, {region}
+                </p>
+              )}
+            </div>
+          )}
+          <DialogFooterButtons onCancel={() => onOpenChange(false)} submitting={submitting} />
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---- Edit Contact ----
+
+function EditContactDialog({
+  project,
+  open,
+  onOpenChange,
+  onSaved,
+}: {
+  project: Project;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSaved: (p: Project) => void;
+}) {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [role, setRole] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setFirstName(project.contact_first_name ?? "");
+      setLastName(project.contact_last_name ?? "");
+      setEmail(project.contact_email ?? "");
+      setPhone(project.contact_phone ?? "");
+      setRole(project.contact_role ?? "");
+      setError("");
+    }
+  }, [open, project]);
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+    setSubmitting(true);
+    try {
+      const updated = await updateProject(project.id, {
+        contact_first_name: firstName || undefined,
+        contact_last_name: lastName || undefined,
+        contact_email: email || undefined,
+        contact_phone: phone || undefined,
+        contact_role: role || undefined,
+      });
+      onSaved(updated);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Une erreur est survenue");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Modifier la personne referente</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && <FormError message={error} />}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-cfn">Prenom</Label>
+              <Input id="edit-cfn" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-cln">Nom</Label>
+              <Input id="edit-cln" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-ce">Email</Label>
+            <Input id="edit-ce" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-cp">
+                Telephone <span className="font-normal text-muted-foreground">(optionnel)</span>
+              </Label>
+              <Input id="edit-cp" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-cr">
+                Fonction <span className="font-normal text-muted-foreground">(optionnel)</span>
+              </Label>
+              <Input id="edit-cr" value={role} onChange={(e) => setRole(e.target.value)} placeholder="Ex: Directeur technique" />
+            </div>
+          </div>
+          <DialogFooterButtons onCancel={() => onOpenChange(false)} submitting={submitting} />
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---- Edit Permit ----
+
+function EditPermitDialog({
+  project,
+  open,
+  onOpenChange,
+  onSaved,
+}: {
+  project: Project;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSaved: (p: Project) => void;
+}) {
+  const [needsPermit, setNeedsPermit] = useState(false);
+  const [submissionDate, setSubmissionDate] = useState("");
+  const [isExtension, setIsExtension] = useState(false);
+  const [areaSqm, setAreaSqm] = useState("");
+  const [usageDesc, setUsageDesc] = useState("");
+  const [worksStart, setWorksStart] = useState("");
+  const [worksDuration, setWorksDuration] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setNeedsPermit(project.needs_building_permit);
+      if (project.permit) {
+        setSubmissionDate(project.permit.permit_submission_date);
+        setIsExtension(project.permit.is_extension);
+        setAreaSqm(String(project.permit.area_sqm));
+        setUsageDesc(project.permit.usage_description);
+        setWorksStart(project.permit.works_start_date);
+        setWorksDuration(String(project.permit.works_duration_months));
+      } else {
+        setSubmissionDate("");
+        setIsExtension(false);
+        setAreaSqm("");
+        setUsageDesc("");
+        setWorksStart("");
+        setWorksDuration("");
+      }
+      setError("");
+    }
+  }, [open, project]);
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+    setSubmitting(true);
+    try {
+      const params: Partial<CreateProjectParams> = {
+        needs_building_permit: needsPermit,
+      };
+      if (needsPermit) {
+        params.permit_attributes = {
+          ...(project.permit ? { id: project.permit.id } : {}),
+          permit_submission_date: submissionDate || undefined,
+          is_extension: isExtension,
+          area_sqm: areaSqm ? Number(areaSqm) : undefined,
+          usage_description: usageDesc || undefined,
+          works_start_date: worksStart || undefined,
+          works_duration_months: worksDuration ? Number(worksDuration) : undefined,
+        } as CreateProjectParams["permit_attributes"];
+      } else if (project.permit) {
+        params.permit_attributes = {
+          id: project.permit.id,
+          _destroy: true,
+        } as unknown as CreateProjectParams["permit_attributes"];
+      }
+      const updated = await updateProject(project.id, params);
+      onSaved(updated);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Une erreur est survenue");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Modifier les informations immobilieres</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && <FormError message={error} />}
+          <div className="flex items-center justify-between rounded-lg border p-3">
+            <div>
+              <Label htmlFor="edit-needs-permit" className="text-sm font-medium">
+                Permis de construire necessaire
+              </Label>
+            </div>
+            <Switch id="edit-needs-permit" checked={needsPermit} onCheckedChange={setNeedsPermit} />
+          </div>
+          {needsPermit && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="edit-psd">Date de depot du permis</Label>
+                <Input id="edit-psd" type="date" value={submissionDate} onChange={(e) => setSubmissionDate(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Type de projet</Label>
+                <Select value={isExtension ? "extension" : "new"} onValueChange={(v) => setIsExtension(v === "extension")}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new">Nouveau site</SelectItem>
+                    <SelectItem value="extension">Extension</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-area">Surface (m²)</Label>
+                  <Input id="edit-area" type="number" min="1" value={areaSqm} onChange={(e) => setAreaSqm(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-dur">Duree des travaux (mois)</Label>
+                  <Input id="edit-dur" type="number" min="1" value={worksDuration} onChange={(e) => setWorksDuration(e.target.value)} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-usage">Usage prevu</Label>
+                <Textarea id="edit-usage" value={usageDesc} onChange={(e) => setUsageDesc(e.target.value)} rows={2} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-ws">Date de debut des travaux</Label>
+                <Input id="edit-ws" type="date" value={worksStart} onChange={(e) => setWorksStart(e.target.value)} />
+              </div>
+            </>
+          )}
+          <DialogFooterButtons onCancel={() => onOpenChange(false)} submitting={submitting} />
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---- Expense Dialog ----
 
 function ExpenseDialog({
   projectId,
@@ -535,11 +1015,7 @@ function ExpenseDialog({
           <DialogTitle>{isEdit ? "Modifier la depense" : "Nouvelle depense"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {error}
-            </div>
-          )}
+          {error && <FormError message={error} />}
           <div className="space-y-2">
             <Label htmlFor="expense-name">Nom</Label>
             <Input
@@ -634,5 +1110,34 @@ function ExpenseDialog({
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ---- Shared form components ----
+
+function FormError({ message }: { message: string }) {
+  return (
+    <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+      {message}
+    </div>
+  );
+}
+
+function DialogFooterButtons({
+  onCancel,
+  submitting,
+}: {
+  onCancel: () => void;
+  submitting: boolean;
+}) {
+  return (
+    <div className="flex justify-end gap-3">
+      <Button type="button" variant="outline" onClick={onCancel}>
+        Annuler
+      </Button>
+      <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700" disabled={submitting}>
+        {submitting ? "Enregistrement..." : "Enregistrer"}
+      </Button>
+    </div>
   );
 }
