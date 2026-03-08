@@ -14,6 +14,8 @@ export type Project = {
   id: number;
   name: string;
   objective: string | null;
+  process_before: string | null;
+  process_after: string | null;
   location_is_headquarters: boolean;
   location_street: string | null;
   location_postal_code: string | null;
@@ -36,6 +38,8 @@ export type Project = {
 export type CreateProjectParams = {
   name: string;
   objective?: string;
+  process_before?: string;
+  process_after?: string;
   location_is_headquarters?: boolean;
   location_street?: string;
   location_postal_code?: string;
@@ -89,23 +93,36 @@ export function deleteProject(id: number) {
 // Expenses
 
 export type FinancingType = "self_funded" | "loan" | "leasing";
+export type InvestmentType = "building" | "equipment" | "software" | "consulting" | "training" | "r_and_d";
 
 export type Expense = {
   id: number;
   name: string;
   amount: number;
+  investment_type: InvestmentType;
   financing_type: FinancingType;
   loan_rate: number | null;
   loan_first_payment_date: string | null;
+  quotes_count: number | null;
+  quote_signed_date: string | null;
+  works_start_date: string | null;
+  works_end_date: string | null;
+  commissioning_date: string | null;
   created_at: string;
 };
 
 export type CreateExpenseParams = {
   name: string;
   amount: number;
+  investment_type: InvestmentType;
   financing_type: FinancingType;
   loan_rate?: number;
   loan_first_payment_date?: string;
+  quotes_count?: number;
+  quote_signed_date?: string;
+  works_start_date?: string;
+  works_end_date?: string;
+  commissioning_date?: string;
 };
 
 export function getExpenses(projectId: number) {

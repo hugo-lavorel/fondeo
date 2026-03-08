@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_08_092723) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_08_101526) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -35,13 +35,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_08_092723) do
 
   create_table "expenses", force: :cascade do |t|
     t.decimal "amount", precision: 12, scale: 2, null: false
+    t.date "commissioning_date"
     t.datetime "created_at", null: false
     t.string "financing_type", default: "self_funded", null: false
+    t.string "investment_type"
     t.date "loan_first_payment_date"
     t.decimal "loan_rate", precision: 5, scale: 2
     t.string "name", null: false
     t.bigint "project_id", null: false
+    t.date "quote_signed_date"
+    t.integer "quotes_count"
     t.datetime "updated_at", null: false
+    t.date "works_end_date"
+    t.date "works_start_date"
     t.index ["project_id"], name: "index_expenses_on_project_id"
   end
 
@@ -75,6 +81,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_08_092723) do
     t.string "name", null: false
     t.boolean "needs_building_permit", default: false, null: false
     t.text "objective"
+    t.text "process_after"
+    t.text "process_before"
     t.datetime "updated_at", null: false
     t.index ["company_id"], name: "index_projects_on_company_id"
   end

@@ -38,6 +38,7 @@ import {
   type Project,
   type Expense,
   type FinancingType,
+  type InvestmentType,
   type CreateProjectParams,
 } from "@/api/projects";
 import { getCompany, type Company } from "@/api/company";
@@ -63,6 +64,15 @@ const FINANCING_LABELS: Record<FinancingType, string> = {
   self_funded: "Autofinancement",
   loan: "Emprunt",
   leasing: "Credit-bail",
+};
+
+const INVESTMENT_LABELS: Record<InvestmentType, string> = {
+  building: "Batiment",
+  equipment: "Equipement et materiel de production",
+  software: "Logiciels",
+  consulting: "Etudes et prestations",
+  training: "Formation",
+  r_and_d: "R&D et innovation",
 };
 
 function formatCurrency(amount: number) {
@@ -210,10 +220,26 @@ export default function ProjectPage() {
             </CardTitle>
             <EditButton onClick={() => setEditSection("general")} />
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <p className="text-sm whitespace-pre-wrap">
               {project.objective || "Aucun objectif renseigne."}
             </p>
+            {(project.process_before || project.process_after) && (
+              <div className="grid gap-4 lg:grid-cols-2">
+                {project.process_before && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Procede de fabrication avant projet</p>
+                    <p className="text-sm whitespace-pre-wrap">{project.process_before}</p>
+                  </div>
+                )}
+                {project.process_after && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Procede de fabrication apres projet</p>
+                    <p className="text-sm whitespace-pre-wrap">{project.process_after}</p>
+                  </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -406,8 +432,9 @@ export default function ProjectPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nom</TableHead>
+                    <TableHead className="hidden md:table-cell">Type</TableHead>
                     <TableHead className="hidden sm:table-cell">Financement</TableHead>
-                    <TableHead className="text-right">Montant</TableHead>
+                    <TableHead className="text-right">Montant HT</TableHead>
                     <TableHead className="w-10" />
                   </TableRow>
                 </TableHeader>
@@ -422,6 +449,11 @@ export default function ProjectPage() {
                       }}
                     >
                       <TableCell className="font-medium">{expense.name}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <span className="text-sm text-muted-foreground">
+                          {INVESTMENT_LABELS[expense.investment_type]}
+                        </span>
+                      </TableCell>
                       <TableCell className="hidden sm:table-cell">
                         <span className="text-sm text-muted-foreground">
                           {FINANCING_LABELS[expense.financing_type]}
@@ -528,6 +560,8 @@ function EditGeneralDialog({
 }) {
   const [name, setName] = useState("");
   const [objective, setObjective] = useState("");
+  const [processBefore, setProcessBefore] = useState("");
+  const [processAfter, setProcessAfter] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -535,6 +569,8 @@ function EditGeneralDialog({
     if (open) {
       setName(project.name);
       setObjective(project.objective ?? "");
+      setProcessBefore(project.process_before ?? "");
+      setProcessAfter(project.process_after ?? "");
       setError("");
     }
   }, [open, project]);
@@ -547,6 +583,8 @@ function EditGeneralDialog({
       const updated = await updateProject(project.id, {
         name,
         objective: objective || undefined,
+        process_before: processBefore || undefined,
+        process_after: processAfter || undefined,
       });
       onSaved(updated);
     } catch (err) {
@@ -580,6 +618,24 @@ function EditGeneralDialog({
               value={objective}
               onChange={(e) => setObjective(e.target.value)}
               rows={5}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-process-before">Procede de fabrication avant projet</Label>
+            <Textarea
+              id="edit-process-before"
+              value={processBefore}
+              onChange={(e) => setProcessBefore(e.target.value)}
+              rows={4}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-process-after">Procede de fabrication apres projet</Label>
+            <Textarea
+              id="edit-process-after"
+              value={processAfter}
+              onChange={(e) => setProcessAfter(e.target.value)}
+              rows={4}
             />
           </div>
           <DialogFooterButtons onCancel={() => onOpenChange(false)} submitting={submitting} />
@@ -947,9 +1003,15 @@ function ExpenseDialog({
   const isEdit = !!expense;
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
+  const [investmentType, setInvestmentType] = useState<InvestmentType>("equipment");
   const [financingType, setFinancingType] = useState<FinancingType>("self_funded");
   const [loanRate, setLoanRate] = useState("");
   const [loanFirstPaymentDate, setLoanFirstPaymentDate] = useState("");
+  const [quotesCount, setQuotesCount] = useState("");
+  const [quoteSignedDate, setQuoteSignedDate] = useState("");
+  const [worksStartDate, setWorksStartDate] = useState("");
+  const [worksEndDate, setWorksEndDate] = useState("");
+  const [commissioningDate, setCommissioningDate] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -958,15 +1020,27 @@ function ExpenseDialog({
       if (expense) {
         setName(expense.name);
         setAmount(String(expense.amount));
+        setInvestmentType(expense.investment_type);
         setFinancingType(expense.financing_type);
         setLoanRate(expense.loan_rate ? String(expense.loan_rate) : "");
         setLoanFirstPaymentDate(expense.loan_first_payment_date ?? "");
+        setQuotesCount(expense.quotes_count != null ? String(expense.quotes_count) : "");
+        setQuoteSignedDate(expense.quote_signed_date ?? "");
+        setWorksStartDate(expense.works_start_date ?? "");
+        setWorksEndDate(expense.works_end_date ?? "");
+        setCommissioningDate(expense.commissioning_date ?? "");
       } else {
         setName("");
         setAmount("");
+        setInvestmentType("equipment");
         setFinancingType("self_funded");
         setLoanRate("");
         setLoanFirstPaymentDate("");
+        setQuotesCount("");
+        setQuoteSignedDate("");
+        setWorksStartDate("");
+        setWorksEndDate("");
+        setCommissioningDate("");
       }
       setError("");
     }
@@ -980,7 +1054,13 @@ function ExpenseDialog({
     const params = {
       name,
       amount: parseFloat(amount),
+      investment_type: investmentType,
       financing_type: financingType,
+      quotes_count: quotesCount ? parseInt(quotesCount) : undefined,
+      quote_signed_date: quoteSignedDate || undefined,
+      works_start_date: worksStartDate || undefined,
+      works_end_date: worksEndDate || undefined,
+      commissioning_date: commissioningDate || undefined,
       ...(financingType === "loan"
         ? {
             loan_rate: parseFloat(loanRate),
@@ -1027,7 +1107,26 @@ function ExpenseDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="expense-amount">Montant (EUR)</Label>
+            <Label>Type d'investissement</Label>
+            <Select
+              value={investmentType}
+              onValueChange={(v) => setInvestmentType(v as InvestmentType)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="building">Batiment</SelectItem>
+                <SelectItem value="equipment">Equipement et materiel de production</SelectItem>
+                <SelectItem value="software">Logiciels</SelectItem>
+                <SelectItem value="consulting">Etudes et prestations</SelectItem>
+                <SelectItem value="training">Formation</SelectItem>
+                <SelectItem value="r_and_d">R&D et innovation</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="expense-amount">Montant HT (EUR)</Label>
             <Input
               id="expense-amount"
               type="number"
@@ -1092,6 +1191,57 @@ function ExpenseDialog({
               </span>
             </div>
           )}
+
+          <div className="space-y-2">
+            <Label htmlFor="quotes-count">Nombre de devis obtenus</Label>
+            <Input
+              id="quotes-count"
+              type="number"
+              min="0"
+              step="1"
+              value={quotesCount}
+              onChange={(e) => setQuotesCount(e.target.value)}
+              placeholder="3"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="quote-signed-date">Date de signature du devis definitif</Label>
+            <Input
+              id="quote-signed-date"
+              type="date"
+              value={quoteSignedDate}
+              onChange={(e) => setQuoteSignedDate(e.target.value)}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="works-start">Debut des travaux / installation</Label>
+              <Input
+                id="works-start"
+                type="date"
+                value={worksStartDate}
+                onChange={(e) => setWorksStartDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="works-end">Fin des travaux / installation</Label>
+              <Input
+                id="works-end"
+                type="date"
+                value={worksEndDate}
+                onChange={(e) => setWorksEndDate(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="commissioning-date">Date de mise en service</Label>
+            <Input
+              id="commissioning-date"
+              type="date"
+              value={commissioningDate}
+              onChange={(e) => setCommissioningDate(e.target.value)}
+            />
+          </div>
 
           <div className="flex justify-end gap-3">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

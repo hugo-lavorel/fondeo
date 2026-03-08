@@ -50,7 +50,12 @@ module Api
       end
 
       def expense_params
-        params.require(:expense).permit(:name, :amount, :financing_type, :loan_rate, :loan_first_payment_date)
+        params.require(:expense).permit(
+          :name, :amount, :financing_type, :investment_type,
+          :loan_rate, :loan_first_payment_date,
+          :quotes_count, :quote_signed_date,
+          :works_start_date, :works_end_date, :commissioning_date
+        )
       end
 
       def expense_json(expense)
@@ -58,9 +63,15 @@ module Api
           id: expense.id,
           name: expense.name,
           amount: expense.amount.to_f,
+          investment_type: expense.investment_type,
           financing_type: expense.financing_type,
           loan_rate: expense.loan_rate&.to_f,
           loan_first_payment_date: expense.loan_first_payment_date,
+          quotes_count: expense.quotes_count,
+          quote_signed_date: expense.quote_signed_date,
+          works_start_date: expense.works_start_date,
+          works_end_date: expense.works_end_date,
+          commissioning_date: expense.commissioning_date,
           created_at: expense.created_at
         }
       end

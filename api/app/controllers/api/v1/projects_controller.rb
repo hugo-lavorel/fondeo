@@ -52,7 +52,7 @@ module Api
 
       def project_params
         params.require(:project).permit(
-          :name, :objective,
+          :name, :objective, :process_before, :process_after,
           :location_is_headquarters,
           :location_street, :location_postal_code, :location_city,
           :location_department, :location_region,
@@ -72,6 +72,8 @@ module Api
           id: project.id,
           name: project.name,
           objective: project.objective,
+          process_before: project.process_before,
+          process_after: project.process_after,
           location_is_headquarters: project.location_is_headquarters,
           location_street: project.location_street,
           location_postal_code: project.location_postal_code,

@@ -29,6 +29,8 @@ const STEPS = [
 type FormData = {
   name: string;
   objective: string;
+  process_before: string;
+  process_after: string;
   location_is_headquarters: boolean;
   location_street: string;
   location_postal_code: string;
@@ -52,6 +54,8 @@ type FormData = {
 const INITIAL_FORM: FormData = {
   name: "",
   objective: "",
+  process_before: "",
+  process_after: "",
   location_is_headquarters: true,
   location_street: "",
   location_postal_code: "",
@@ -122,6 +126,8 @@ export default function NewProjectPage() {
     const params: CreateProjectParams = {
       name: form.name,
       objective: form.objective || undefined,
+      process_before: form.process_before || undefined,
+      process_after: form.process_after || undefined,
       location_is_headquarters: form.location_is_headquarters,
       contact_first_name: form.contact_first_name || undefined,
       contact_last_name: form.contact_last_name || undefined,
@@ -290,6 +296,26 @@ function StepGeneral({
           onChange={(e) => update("objective", e.target.value)}
           placeholder="Decrivez les objectifs principaux du projet, les resultats attendus et l'impact envisage."
           rows={5}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="process_before">Procede de fabrication avant projet</Label>
+        <Textarea
+          id="process_before"
+          value={form.process_before}
+          onChange={(e) => update("process_before", e.target.value)}
+          placeholder="Detaillez le procede de fabrication actuel, avant la mise en oeuvre du projet."
+          rows={4}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="process_after">Procede de fabrication apres projet</Label>
+        <Textarea
+          id="process_after"
+          value={form.process_after}
+          onChange={(e) => update("process_after", e.target.value)}
+          placeholder="Detaillez le procede de fabrication envisage apres la mise en oeuvre du projet."
+          rows={4}
         />
       </div>
     </>
