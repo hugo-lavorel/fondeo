@@ -148,3 +148,49 @@ export function deleteExpense(projectId: number, expenseId: number) {
     method: "DELETE",
   });
 }
+
+// Process Items (inputs/outputs)
+
+export type ProcessItemDirection = "input" | "output";
+
+export type ProcessItem = {
+  id: number;
+  direction: ProcessItemDirection;
+  name: string;
+  customs_code: string | null;
+  percentage: number | null;
+  certifications: string[];
+  created_at: string;
+};
+
+export type CreateProcessItemParams = {
+  direction: ProcessItemDirection;
+  name: string;
+  customs_code?: string;
+  percentage?: number;
+  certifications?: string[];
+};
+
+export function getProcessItems(projectId: number) {
+  return api<ProcessItem[]>(`/api/v1/projects/${projectId}/process_items`);
+}
+
+export function createProcessItem(projectId: number, params: CreateProcessItemParams) {
+  return api<ProcessItem>(`/api/v1/projects/${projectId}/process_items`, {
+    method: "POST",
+    body: { process_item: params },
+  });
+}
+
+export function updateProcessItem(projectId: number, itemId: number, params: Partial<CreateProcessItemParams>) {
+  return api<ProcessItem>(`/api/v1/projects/${projectId}/process_items/${itemId}`, {
+    method: "PATCH",
+    body: { process_item: params },
+  });
+}
+
+export function deleteProcessItem(projectId: number, itemId: number) {
+  return api<void>(`/api/v1/projects/${projectId}/process_items/${itemId}`, {
+    method: "DELETE",
+  });
+}

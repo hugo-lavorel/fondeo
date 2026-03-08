@@ -9,6 +9,7 @@ Rails.application.routes.draw do
       resource :company, only: [ :show, :create, :update ]
       resources :projects do
         resources :expenses, only: [ :index, :create, :update, :destroy ]
+        resources :process_items, only: [ :index, :create, :update, :destroy ]
       end
     end
   end

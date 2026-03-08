@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_08_101526) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_08_123932) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -49,6 +49,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_08_101526) do
     t.date "works_end_date"
     t.date "works_start_date"
     t.index ["project_id"], name: "index_expenses_on_project_id"
+  end
+
+  create_table "process_items", force: :cascade do |t|
+    t.jsonb "certifications", default: []
+    t.datetime "created_at", null: false
+    t.string "customs_code"
+    t.string "direction", null: false
+    t.string "name", null: false
+    t.decimal "percentage", precision: 5, scale: 2
+    t.bigint "project_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["project_id"], name: "index_process_items_on_project_id"
   end
 
   create_table "project_permits", force: :cascade do |t|
@@ -102,6 +114,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_08_101526) do
   end
 
   add_foreign_key "expenses", "projects"
+  add_foreign_key "process_items", "projects"
   add_foreign_key "project_permits", "projects"
   add_foreign_key "projects", "companies"
   add_foreign_key "users", "companies"

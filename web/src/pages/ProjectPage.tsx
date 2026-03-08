@@ -35,10 +35,16 @@ import {
   createExpense,
   updateExpense,
   deleteExpense,
+  getProcessItems,
+  createProcessItem,
+  updateProcessItem,
+  deleteProcessItem,
   type Project,
   type Expense,
   type FinancingType,
   type InvestmentType,
+  type ProcessItem,
+  type ProcessItemDirection,
   type CreateProjectParams,
 } from "@/api/projects";
 import { getCompany, type Company } from "@/api/company";
@@ -56,7 +62,10 @@ import {
   Euro,
   AlertTriangle,
   Pencil,
+  Package,
+  X,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import AddressAutocomplete, { type AddressResult } from "@/components/AddressAutocomplete";
 import AppLayout from "@/components/AppLayout";
 
@@ -94,16 +103,21 @@ export default function ProjectPage() {
   const [deleting, setDeleting] = useState(false);
   const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [processItems, setProcessItems] = useState<ProcessItem[]>([]);
+  const [processItemDialogOpen, setProcessItemDialogOpen] = useState(false);
+  const [editingProcessItem, setEditingProcessItem] = useState<ProcessItem | null>(null);
+  const [processItemDirection, setProcessItemDirection] = useState<ProcessItemDirection>("input");
   const [editSection, setEditSection] = useState<EditSection>(null);
 
   const projectId = Number(id);
 
   useEffect(() => {
     if (!id) return;
-    Promise.all([getProject(projectId), getExpenses(projectId), getCompany()])
-      .then(([p, e, c]) => {
+    Promise.all([getProject(projectId), getExpenses(projectId), getProcessItems(projectId), getCompany()])
+      .then(([p, e, pi, c]) => {
         setProject(p);
         setExpenses(e);
+        setProcessItems(pi);
         setCompany(c);
       })
       .catch(() => navigate("/dashboard"))
@@ -167,6 +181,23 @@ export default function ProjectPage() {
   function handleProjectUpdated(updated: Project) {
     setProject(updated);
     setEditSection(null);
+  }
+
+  function handleProcessItemSaved(item: ProcessItem, previous?: ProcessItem) {
+    if (previous) {
+      setProcessItems((prev) => prev.map((i) => (i.id === item.id ? item : i)));
+    } else {
+      setProcessItems((prev) => [...prev, item]);
+    }
+  }
+
+  async function handleDeleteProcessItem(itemId: number) {
+    try {
+      await deleteProcessItem(projectId, itemId);
+      setProcessItems((prev) => prev.filter((i) => i.id !== itemId));
+    } catch {
+      // ignore
+    }
   }
 
   if (loading) {
@@ -488,6 +519,52 @@ export default function ProjectPage() {
           </CardContent>
         </Card>
 
+        {/* Process Items (Entrants / Sortants) */}
+        <Card className="lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Package className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Entrants & Sortants du process de production
+              </CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Inputs */}
+            <ProcessItemList
+              title="Entrants"
+              items={processItems.filter((i) => i.direction === "input")}
+              onAdd={() => {
+                setEditingProcessItem(null);
+                setProcessItemDirection("input");
+                setProcessItemDialogOpen(true);
+              }}
+              onEdit={(item) => {
+                setEditingProcessItem(item);
+                setProcessItemDirection(item.direction);
+                setProcessItemDialogOpen(true);
+              }}
+              onDelete={handleDeleteProcessItem}
+            />
+            {/* Outputs */}
+            <ProcessItemList
+              title="Sortants"
+              items={processItems.filter((i) => i.direction === "output")}
+              onAdd={() => {
+                setEditingProcessItem(null);
+                setProcessItemDirection("output");
+                setProcessItemDialogOpen(true);
+              }}
+              onEdit={(item) => {
+                setEditingProcessItem(item);
+                setProcessItemDirection(item.direction);
+                setProcessItemDialogOpen(true);
+              }}
+              onDelete={handleDeleteProcessItem}
+            />
+          </CardContent>
+        </Card>
+
         {/* Placeholder for future */}
         <Card className="border-dashed lg:col-span-2">
           <CardContent className="py-10 text-center">
@@ -496,6 +573,16 @@ export default function ProjectPage() {
             </p>
           </CardContent>
         </Card>
+
+        <ProcessItemDialog
+          projectId={project.id}
+          open={processItemDialogOpen}
+          onOpenChange={setProcessItemDialogOpen}
+          item={editingProcessItem}
+          direction={processItemDirection}
+          onSaved={handleProcessItemSaved}
+          siblingItems={processItems.filter((i) => i.direction === processItemDirection)}
+        />
 
         <ExpenseDialog
           projectId={project.id}
@@ -1255,6 +1342,322 @@ function ExpenseDialog({
               {submitting
                 ? isEdit ? "Modification..." : "Ajout..."
                 : isEdit ? "Enregistrer" : "Ajouter la depense"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---- Process Items ----
+
+const CERTIFICATION_OPTIONS = [
+  "Bio",
+  "Halal",
+  "Casher",
+  "AOP",
+  "AOC",
+  "IGP",
+  "Label Rouge",
+  "Commerce equitable",
+  "Sans gluten",
+  "Vegan",
+];
+
+function ProcessItemList({
+  title,
+  items,
+  onAdd,
+  onEdit,
+  onDelete,
+}: {
+  title: string;
+  items: ProcessItem[];
+  onAdd: () => void;
+  onEdit: (item: ProcessItem) => void;
+  onDelete: (id: number) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <h4 className="text-sm font-medium">{title}</h4>
+          {items.length > 0 && (() => {
+            const total = items.reduce((sum, i) => sum + (i.percentage ?? 0), 0);
+            return (
+              <span className={`text-xs ${total > 100 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                {total}% / 100%
+              </span>
+            );
+          })()}
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onAdd}
+        >
+          <Plus className="mr-2 h-3.5 w-3.5" />
+          Ajouter
+        </Button>
+      </div>
+      {items.length === 0 ? (
+        <p className="py-2 text-center text-sm text-muted-foreground">
+          Aucun {title.toLowerCase()} renseigne.
+        </p>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nom</TableHead>
+              <TableHead className="hidden sm:table-cell">Code douanier</TableHead>
+              <TableHead className="hidden md:table-cell">Certifications</TableHead>
+              <TableHead className="text-right">%</TableHead>
+              <TableHead className="w-10" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {items.map((item) => (
+              <TableRow
+                key={item.id}
+                className="cursor-pointer"
+                onClick={() => onEdit(item)}
+              >
+                <TableCell className="font-medium">{item.name}</TableCell>
+                <TableCell className="hidden text-muted-foreground sm:table-cell">
+                  {item.customs_code || "—"}
+                </TableCell>
+                <TableCell className="hidden md:table-cell">
+                  <div className="flex flex-wrap gap-1">
+                    {item.certifications.length > 0
+                      ? item.certifications.map((c) => (
+                          <Badge key={c} variant="secondary" className="text-xs">
+                            {c}
+                          </Badge>
+                        ))
+                      : <span className="text-muted-foreground">—</span>}
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  {item.percentage != null ? `${item.percentage}%` : "—"}
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(item.id);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+    </div>
+  );
+}
+
+function ProcessItemDialog({
+  projectId,
+  open,
+  onOpenChange,
+  item,
+  direction,
+  onSaved,
+  siblingItems,
+}: {
+  projectId: number;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  item: ProcessItem | null;
+  direction: ProcessItemDirection;
+  onSaved: (item: ProcessItem, previous?: ProcessItem) => void;
+  siblingItems: ProcessItem[];
+}) {
+  const isEdit = !!item;
+  const [name, setName] = useState("");
+  const [customsCode, setCustomsCode] = useState("");
+  const [percentage, setPercentage] = useState("");
+  const [certifications, setCertifications] = useState<string[]>([]);
+  const [certInput, setCertInput] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      if (item) {
+        setName(item.name);
+        setCustomsCode(item.customs_code ?? "");
+        setPercentage(item.percentage != null ? String(item.percentage) : "");
+        setCertifications(item.certifications ?? []);
+      } else {
+        setName("");
+        setCustomsCode("");
+        setPercentage("");
+        setCertifications([]);
+      }
+      setCertInput("");
+      setError("");
+    }
+  }, [open, item]);
+
+  const usedPercentage = siblingItems
+    .filter((i) => !item || i.id !== item.id)
+    .reduce((sum, i) => sum + (i.percentage ?? 0), 0);
+  const remainingPercentage = Math.max(0, 100 - usedPercentage);
+
+  function addCertification(cert: string) {
+    const trimmed = cert.trim();
+    if (trimmed && !certifications.includes(trimmed)) {
+      setCertifications([...certifications, trimmed]);
+    }
+    setCertInput("");
+  }
+
+  function removeCertification(cert: string) {
+    setCertifications(certifications.filter((c) => c !== cert));
+  }
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+    setSubmitting(true);
+
+    const params = {
+      direction,
+      name,
+      customs_code: customsCode || undefined,
+      percentage: percentage ? parseFloat(percentage) : undefined,
+      certifications,
+    };
+
+    try {
+      if (item) {
+        const updated = await updateProcessItem(projectId, item.id, params);
+        onSaved(updated, item);
+      } else {
+        const created = await createProcessItem(projectId, params);
+        onSaved(created);
+      }
+      onOpenChange(false);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Une erreur est survenue");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const directionLabel = direction === "input" ? "entrant" : "sortant";
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {isEdit ? `Modifier l'${directionLabel}` : `Nouvel ${directionLabel}`}
+          </DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && <FormError message={error} />}
+          <div className="space-y-2">
+            <Label htmlFor="pi-name">Nom</Label>
+            <Input
+              id="pi-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ex: Farine de ble T55"
+              required
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="pi-customs">Code douanier</Label>
+              <Input
+                id="pi-customs"
+                value={customsCode}
+                onChange={(e) => setCustomsCode(e.target.value)}
+                placeholder="Ex: 1101 00 15"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="pi-pct">Pourcentage (%)</Label>
+              <Input
+                id="pi-pct"
+                type="number"
+                min="0"
+                max={remainingPercentage}
+                step="0.01"
+                value={percentage}
+                onChange={(e) => setPercentage(e.target.value)}
+                placeholder="25"
+              />
+              <p className="text-xs text-muted-foreground">
+                {remainingPercentage < 100
+                  ? `${remainingPercentage}% restant`
+                  : "100% disponible"}
+              </p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Certifications</Label>
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {certifications.map((c) => (
+                <Badge key={c} variant="secondary" className="gap-1 pr-1">
+                  {c}
+                  <button
+                    type="button"
+                    onClick={() => removeCertification(c)}
+                    className="ml-0.5 rounded-full p-0.5 hover:bg-muted"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Input
+                value={certInput}
+                onChange={(e) => setCertInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addCertification(certInput);
+                  }
+                }}
+                placeholder="Saisir ou choisir ci-dessous"
+              />
+            </div>
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {CERTIFICATION_OPTIONS.filter((c) => !certifications.includes(c)).map((c) => (
+                <Badge
+                  key={c}
+                  variant="outline"
+                  className="cursor-pointer hover:bg-muted"
+                  onClick={() => addCertification(c)}
+                >
+                  + {c}
+                </Badge>
+              ))}
+            </div>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Annuler
+            </Button>
+            <Button
+              type="submit"
+              className="bg-emerald-600 hover:bg-emerald-700"
+              disabled={submitting}
+            >
+              {submitting
+                ? isEdit ? "Modification..." : "Ajout..."
+                : isEdit ? "Enregistrer" : `Ajouter l'${directionLabel}`}
             </Button>
           </div>
         </form>
