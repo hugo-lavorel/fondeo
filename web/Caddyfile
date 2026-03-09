@@ -1,0 +1,39 @@
+{
+    admin off
+    persist_config off
+    auto_https off
+    log {
+        format json
+    }
+    servers {
+        trusted_proxies static private_ranges 100.0.0.0/8
+    }
+}
+
+:{$PORT:3000} {
+    log {
+        format json
+    }
+
+    # Proxy API requests to the Rails backend
+    handle /api/* {
+        reverse_proxy {$API_URL} {
+            header_up Host {upstream_hostport}
+            header_up X-Forwarded-Host {host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # Health check endpoint
+    handle /health {
+        reverse_proxy {$API_URL}
+    }
+
+    # Serve static files with SPA fallback
+    handle {
+        root * dist
+        encode gzip
+        try_files {path} /index.html
+        file_server
+    }
+}
