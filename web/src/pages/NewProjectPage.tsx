@@ -223,8 +223,6 @@ export default function NewProjectPage() {
     }
   }
 
-  const isLastStep = step === STEPS.length - 1;
-
   return (
     <AppLayout>
       <Button variant="ghost" size="sm" className="mb-4" asChild>
@@ -327,7 +325,7 @@ export default function NewProjectPage() {
               <StepPermit form={form} update={update} />
               <StepFooter
                 canAdvance
-                isLastStep
+                isLastStep={step === STEPS.length - 1}
                 submitting={submitting}
                 onBack={handleBack}
                 showBack
