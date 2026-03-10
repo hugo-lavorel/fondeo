@@ -760,6 +760,7 @@ function ProcessItemFormDialog({
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    e.stopPropagation();
     onSave({
       _key: item?._key ?? _nextKey++,
       direction,
