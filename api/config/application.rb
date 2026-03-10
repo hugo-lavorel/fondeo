@@ -28,5 +28,14 @@ module Api
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
+
+    # Add cookie and session middleware (needed for cookie-based auth in API-only mode)
+    config.middleware.use ActionDispatch::Cookies
+    config.middleware.use ActionDispatch::Session::CookieStore,
+      key: "_fondeo_session",
+      same_site: :lax,
+      secure: Rails.env.production?,
+      httponly: true,
+      expire_after: 14.days
   end
 end
