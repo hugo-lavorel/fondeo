@@ -19,6 +19,7 @@ import { queryClient } from "@/lib/query-client";
 type AuthContextType = {
   user: User | null;
   loading: boolean;
+  checked: boolean;
   ensureAuth: () => void;
   login: (email: string, password: string) => Promise<void>;
   signup: (params: {
@@ -37,6 +38,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
+  const [checked, setChecked] = useState(false);
   const checkedRef = useRef(false);
 
   const ensureAuth = useCallback(() => {
@@ -46,7 +48,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     getCurrentUser()
       .then(setUser)
       .catch(() => setUser(null))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        setChecked(true);
+      });
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -88,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, ensureAuth, login, signup, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, checked, ensureAuth, login, signup, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
