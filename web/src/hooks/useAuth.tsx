@@ -14,6 +14,7 @@ import {
   type User,
 } from "@/api/auth";
 import { ApiError } from "@/api/client";
+import { queryClient } from "@/lib/query-client";
 
 type AuthContextType = {
   user: User | null;
@@ -83,6 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!(e instanceof ApiError && e.status === 401)) throw e;
     }
     setUser(null);
+    queryClient.clear();
   }, []);
 
   return (

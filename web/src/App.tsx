@@ -1,4 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { QueryClientProvider } from "@tanstack/react-query"
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
+import { queryClient } from "@/lib/query-client"
 import { AuthProvider } from "@/hooks/useAuth"
 import ProtectedRoute from "@/components/ProtectedRoute"
 import LandingPage from "@/pages/LandingPage"
@@ -12,6 +15,7 @@ import NewProjectPage from "@/pages/NewProjectPage"
 
 function App() {
   return (
+    <QueryClientProvider client={queryClient}>
     <BrowserRouter>
       <AuthProvider>
         <Routes>
@@ -61,6 +65,8 @@ function App() {
         </Routes>
       </AuthProvider>
     </BrowserRouter>
+    <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
   )
 }
 

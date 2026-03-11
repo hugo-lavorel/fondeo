@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { getCompany, type Company } from "@/api/company";
-import { getProjects, type Project } from "@/api/projects";
+import { useCompany } from "@/hooks/useCompany";
+import { useProjects } from "@/hooks/useProjects";
+import type { Company } from "@/api/company";
+import type { Project } from "@/api/projects";
 import { labelFor, EMPLOYEE_RANGES, REVENUE_RANGES } from "@/lib/company-options";
 import {
   Building2,
@@ -24,19 +25,9 @@ import AppLayout from "@/components/AppLayout";
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const [company, setCompany] = useState<Company | null>(null);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    Promise.all([getCompany(), getProjects()])
-      .then(([c, p]) => {
-        setCompany(c);
-        setProjects(p);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: company, isLoading: companyLoading } = useCompany();
+  const { data: projects, isLoading: projectsLoading } = useProjects();
+  const loading = companyLoading || projectsLoading;
 
   return (
     <AppLayout>
@@ -54,7 +45,7 @@ export default function DashboardPage() {
       ) : (
         <div className="space-y-10">
           {company && <CompanyCards company={company} />}
-          <ProjectsSection projects={projects} />
+          <ProjectsSection projects={projects ?? []} />
         </div>
       )}
     </AppLayout>

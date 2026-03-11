@@ -28,18 +28,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  getProject,
-  deleteProject,
-  updateProject,
-  getExpenses,
-  createExpense,
-  updateExpense,
-  deleteExpense,
-  getProcessItems,
-  createProcessItem,
-  updateProcessItem,
-  deleteProcessItem,
-  type Project,
   type Expense,
   type FinancingType,
   type InvestmentType,
@@ -47,8 +35,12 @@ import {
   type ProcessItemDirection,
   type CreateProjectParams,
 } from "@/api/projects";
-import { getCompany, type Company } from "@/api/company";
 import { ApiError } from "@/api/client";
+import { useProject, useUpdateProject } from "@/hooks/useProject";
+import { useCompany } from "@/hooks/useCompany";
+import { useExpenses, useCreateExpense, useUpdateExpense, useDeleteExpense } from "@/hooks/useExpenses";
+import { useProcessItems, useCreateProcessItem, useUpdateProcessItem, useDeleteProcessItem } from "@/hooks/useProcessItems";
+import { useDeleteProject } from "@/hooks/useProjects";
 import {
   ArrowLeft,
   CalendarDays,
@@ -96,111 +88,55 @@ type EditSection = "general" | "location" | "contact" | "permit" | null;
 export default function ProjectPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [project, setProject] = useState<Project | null>(null);
-  const [company, setCompany] = useState<Company | null>(null);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [deleting, setDeleting] = useState(false);
+  const projectId = Number(id);
+
+  const { data: project, isLoading: projectLoading } = useProject(projectId);
+  const { data: company } = useCompany();
+  const { data: expenses = [] } = useExpenses(projectId);
+  const { data: processItems = [] } = useProcessItems(projectId);
+  const deleteProjectMutation = useDeleteProject();
+  const deleteExpenseMutation = useDeleteExpense(projectId);
+  const deleteProcessItemMutation = useDeleteProcessItem(projectId);
+
   const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  const [processItems, setProcessItems] = useState<ProcessItem[]>([]);
   const [processItemDialogOpen, setProcessItemDialogOpen] = useState(false);
   const [editingProcessItem, setEditingProcessItem] = useState<ProcessItem | null>(null);
   const [processItemDirection, setProcessItemDirection] = useState<ProcessItemDirection>("input");
   const [editSection, setEditSection] = useState<EditSection>(null);
 
-  const projectId = Number(id);
-
-  useEffect(() => {
-    if (!id) return;
-    Promise.all([getProject(projectId), getExpenses(projectId), getProcessItems(projectId), getCompany()])
-      .then(([p, e, pi, c]) => {
-        setProject(p);
-        setExpenses(e);
-        setProcessItems(pi);
-        setCompany(c);
-      })
-      .catch(() => navigate("/dashboard"))
-      .finally(() => setLoading(false));
-  }, [id, navigate]);
-
   async function handleDelete() {
     if (!project || !window.confirm("Supprimer ce projet ? Cette action est irreversible."))
       return;
-    setDeleting(true);
     try {
-      await deleteProject(project.id);
+      await deleteProjectMutation.mutateAsync(project.id);
       navigate("/dashboard");
     } catch {
-      setDeleting(false);
-    }
-  }
-
-  function updateTotals(amount: number, financingType: string, sign: 1 | -1) {
-    setProject((prev) => {
-      if (!prev) return prev;
-      const delta = amount * sign;
-      return {
-        ...prev,
-        total_expenses: prev.total_expenses + delta,
-        total_eligible_expenses:
-          financingType !== "leasing"
-            ? prev.total_eligible_expenses + delta
-            : prev.total_eligible_expenses,
-        total_leasing_expenses:
-          financingType === "leasing"
-            ? prev.total_leasing_expenses + delta
-            : prev.total_leasing_expenses,
-      };
-    });
-  }
-
-  function handleExpenseSaved(expense: Expense, previous?: Expense) {
-    if (previous) {
-      setExpenses((prev) => prev.map((e) => (e.id === expense.id ? expense : e)));
-      updateTotals(previous.amount, previous.financing_type, -1);
-      updateTotals(expense.amount, expense.financing_type, 1);
-    } else {
-      setExpenses((prev) => [expense, ...prev]);
-      updateTotals(expense.amount, expense.financing_type, 1);
+      // ignore
     }
   }
 
   async function handleDeleteExpense(expenseId: number) {
-    const expense = expenses.find((e) => e.id === expenseId);
-    if (!expense) return;
     try {
-      await deleteExpense(projectId, expenseId);
-      setExpenses((prev) => prev.filter((e) => e.id !== expenseId));
-      updateTotals(expense.amount, expense.financing_type, -1);
+      await deleteExpenseMutation.mutateAsync(expenseId);
     } catch {
       // ignore
     }
   }
 
-  function handleProjectUpdated(updated: Project) {
-    setProject(updated);
+  function handleProjectUpdated() {
     setEditSection(null);
-  }
-
-  function handleProcessItemSaved(item: ProcessItem, previous?: ProcessItem) {
-    if (previous) {
-      setProcessItems((prev) => prev.map((i) => (i.id === item.id ? item : i)));
-    } else {
-      setProcessItems((prev) => [...prev, item]);
-    }
   }
 
   async function handleDeleteProcessItem(itemId: number) {
     try {
-      await deleteProcessItem(projectId, itemId);
-      setProcessItems((prev) => prev.filter((i) => i.id !== itemId));
+      await deleteProcessItemMutation.mutateAsync(itemId);
     } catch {
       // ignore
     }
   }
 
-  if (loading) {
+  if (projectLoading) {
     return (
       <AppLayout>
         <div className="flex justify-center py-12">
@@ -234,7 +170,7 @@ export default function ProjectPage() {
             size="sm"
             className="text-destructive hover:bg-destructive/10"
             onClick={handleDelete}
-            disabled={deleting}
+            disabled={deleteProjectMutation.isPending}
           >
             <Trash2 className="mr-2 h-4 w-4" />
             Supprimer
@@ -580,7 +516,6 @@ export default function ProjectPage() {
           onOpenChange={setProcessItemDialogOpen}
           item={editingProcessItem}
           direction={processItemDirection}
-          onSaved={handleProcessItemSaved}
           siblingItems={processItems.filter((i) => i.direction === processItemDirection)}
         />
 
@@ -589,7 +524,6 @@ export default function ProjectPage() {
           open={expenseDialogOpen}
           onOpenChange={setExpenseDialogOpen}
           expense={editingExpense}
-          onSaved={handleExpenseSaved}
         />
 
         <EditGeneralDialog
@@ -600,7 +534,7 @@ export default function ProjectPage() {
         />
         <EditLocationDialog
           project={project}
-          company={company}
+          company={company ?? null}
           open={editSection === "location"}
           onOpenChange={(o) => !o && setEditSection(null)}
           onSaved={handleProjectUpdated}
@@ -640,17 +574,17 @@ function EditGeneralDialog({
   onOpenChange,
   onSaved,
 }: {
-  project: Project;
+  project: { id: number; name: string; objective: string | null; process_before: string | null; process_after: string | null };
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSaved: (p: Project) => void;
+  onSaved: () => void;
 }) {
+  const updateProjectMutation = useUpdateProject(project.id);
   const [name, setName] = useState("");
   const [objective, setObjective] = useState("");
   const [processBefore, setProcessBefore] = useState("");
   const [processAfter, setProcessAfter] = useState("");
   const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -665,19 +599,16 @@ function EditGeneralDialog({
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
-    setSubmitting(true);
     try {
-      const updated = await updateProject(project.id, {
+      await updateProjectMutation.mutateAsync({
         name,
         objective: objective || undefined,
         process_before: processBefore || undefined,
         process_after: processAfter || undefined,
       });
-      onSaved(updated);
+      onSaved();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Une erreur est survenue");
-    } finally {
-      setSubmitting(false);
     }
   }
 
@@ -725,7 +656,7 @@ function EditGeneralDialog({
               rows={4}
             />
           </div>
-          <DialogFooterButtons onCancel={() => onOpenChange(false)} submitting={submitting} />
+          <DialogFooterButtons onCancel={() => onOpenChange(false)} submitting={updateProjectMutation.isPending} />
         </form>
       </DialogContent>
     </Dialog>
@@ -741,12 +672,13 @@ function EditLocationDialog({
   onOpenChange,
   onSaved,
 }: {
-  project: Project;
-  company: Company | null;
+  project: { id: number; location_is_headquarters: boolean; location_street: string | null; location_postal_code: string | null; location_city: string | null; location_department: string | null; location_region: string | null };
+  company: { street: string | null; postal_code: string | null; city: string | null } | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSaved: (p: Project) => void;
+  onSaved: () => void;
 }) {
+  const updateProjectMutation = useUpdateProject(project.id);
   const [isHQ, setIsHQ] = useState(true);
   const [street, setStreet] = useState("");
   const [postalCode, setPostalCode] = useState("");
@@ -754,7 +686,6 @@ function EditLocationDialog({
   const [department, setDepartment] = useState("");
   const [region, setRegion] = useState("");
   const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -771,7 +702,6 @@ function EditLocationDialog({
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
-    setSubmitting(true);
     try {
       const params: Partial<CreateProjectParams> = {
         location_is_headquarters: isHQ,
@@ -783,12 +713,10 @@ function EditLocationDialog({
         params.location_department = department || undefined;
         params.location_region = region || undefined;
       }
-      const updated = await updateProject(project.id, params);
-      onSaved(updated);
+      await updateProjectMutation.mutateAsync(params);
+      onSaved();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Une erreur est survenue");
-    } finally {
-      setSubmitting(false);
     }
   }
 
@@ -833,7 +761,7 @@ function EditLocationDialog({
               )}
             </div>
           )}
-          <DialogFooterButtons onCancel={() => onOpenChange(false)} submitting={submitting} />
+          <DialogFooterButtons onCancel={() => onOpenChange(false)} submitting={updateProjectMutation.isPending} />
         </form>
       </DialogContent>
     </Dialog>
@@ -848,18 +776,18 @@ function EditContactDialog({
   onOpenChange,
   onSaved,
 }: {
-  project: Project;
+  project: { id: number; contact_first_name: string | null; contact_last_name: string | null; contact_email: string | null; contact_phone: string | null; contact_role: string | null };
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSaved: (p: Project) => void;
+  onSaved: () => void;
 }) {
+  const updateProjectMutation = useUpdateProject(project.id);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [role, setRole] = useState("");
   const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -875,20 +803,17 @@ function EditContactDialog({
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
-    setSubmitting(true);
     try {
-      const updated = await updateProject(project.id, {
+      await updateProjectMutation.mutateAsync({
         contact_first_name: firstName || undefined,
         contact_last_name: lastName || undefined,
         contact_email: email || undefined,
         contact_phone: phone || undefined,
         contact_role: role || undefined,
       });
-      onSaved(updated);
+      onSaved();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Une erreur est survenue");
-    } finally {
-      setSubmitting(false);
     }
   }
 
@@ -928,7 +853,7 @@ function EditContactDialog({
               <Input id="edit-cr" value={role} onChange={(e) => setRole(e.target.value)} placeholder="Ex: Directeur technique" />
             </div>
           </div>
-          <DialogFooterButtons onCancel={() => onOpenChange(false)} submitting={submitting} />
+          <DialogFooterButtons onCancel={() => onOpenChange(false)} submitting={updateProjectMutation.isPending} />
         </form>
       </DialogContent>
     </Dialog>
@@ -943,11 +868,12 @@ function EditPermitDialog({
   onOpenChange,
   onSaved,
 }: {
-  project: Project;
+  project: { id: number; needs_building_permit: boolean; permit: { id: number; permit_submission_date: string; is_extension: boolean; area_sqm: number; usage_description: string; works_start_date: string; works_duration_months: number } | null };
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSaved: (p: Project) => void;
+  onSaved: () => void;
 }) {
+  const updateProjectMutation = useUpdateProject(project.id);
   const [needsPermit, setNeedsPermit] = useState(false);
   const [submissionDate, setSubmissionDate] = useState("");
   const [isExtension, setIsExtension] = useState(false);
@@ -956,7 +882,6 @@ function EditPermitDialog({
   const [worksStart, setWorksStart] = useState("");
   const [worksDuration, setWorksDuration] = useState("");
   const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -983,7 +908,6 @@ function EditPermitDialog({
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
-    setSubmitting(true);
     try {
       const params: Partial<CreateProjectParams> = {
         needs_building_permit: needsPermit,
@@ -1004,12 +928,10 @@ function EditPermitDialog({
           _destroy: true,
         } as unknown as CreateProjectParams["permit_attributes"];
       }
-      const updated = await updateProject(project.id, params);
-      onSaved(updated);
+      await updateProjectMutation.mutateAsync(params);
+      onSaved();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Une erreur est survenue");
-    } finally {
-      setSubmitting(false);
     }
   }
 
@@ -1065,7 +987,7 @@ function EditPermitDialog({
               </div>
             </>
           )}
-          <DialogFooterButtons onCancel={() => onOpenChange(false)} submitting={submitting} />
+          <DialogFooterButtons onCancel={() => onOpenChange(false)} submitting={updateProjectMutation.isPending} />
         </form>
       </DialogContent>
     </Dialog>
@@ -1079,14 +1001,14 @@ function ExpenseDialog({
   open,
   onOpenChange,
   expense,
-  onSaved,
 }: {
   projectId: number;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   expense: Expense | null;
-  onSaved: (expense: Expense, previous?: Expense) => void;
 }) {
+  const createExpenseMutation = useCreateExpense(projectId);
+  const updateExpenseMutation = useUpdateExpense(projectId);
   const isEdit = !!expense;
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
@@ -1100,7 +1022,6 @@ function ExpenseDialog({
   const [worksEndDate, setWorksEndDate] = useState("");
   const [commissioningDate, setCommissioningDate] = useState("");
   const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -1133,10 +1054,11 @@ function ExpenseDialog({
     }
   }, [open, expense]);
 
+  const submitting = createExpenseMutation.isPending || updateExpenseMutation.isPending;
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
-    setSubmitting(true);
 
     const params = {
       name,
@@ -1161,17 +1083,13 @@ function ExpenseDialog({
 
     try {
       if (expense) {
-        const updated = await updateExpense(projectId, expense.id, params);
-        onSaved(updated, expense);
+        await updateExpenseMutation.mutateAsync({ expenseId: expense.id, params });
       } else {
-        const created = await createExpense(projectId, params);
-        onSaved(created);
+        await createExpenseMutation.mutateAsync(params);
       }
       onOpenChange(false);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Une erreur est survenue");
-    } finally {
-      setSubmitting(false);
     }
   }
 
@@ -1469,7 +1387,6 @@ function ProcessItemDialog({
   onOpenChange,
   item,
   direction,
-  onSaved,
   siblingItems,
 }: {
   projectId: number;
@@ -1477,9 +1394,10 @@ function ProcessItemDialog({
   onOpenChange: (open: boolean) => void;
   item: ProcessItem | null;
   direction: ProcessItemDirection;
-  onSaved: (item: ProcessItem, previous?: ProcessItem) => void;
   siblingItems: ProcessItem[];
 }) {
+  const createProcessItemMutation = useCreateProcessItem(projectId);
+  const updateProcessItemMutation = useUpdateProcessItem(projectId);
   const isEdit = !!item;
   const [name, setName] = useState("");
   const [customsCode, setCustomsCode] = useState("");
@@ -1487,7 +1405,6 @@ function ProcessItemDialog({
   const [certifications, setCertifications] = useState<string[]>([]);
   const [certInput, setCertInput] = useState("");
   const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -1524,10 +1441,11 @@ function ProcessItemDialog({
     setCertifications(certifications.filter((c) => c !== cert));
   }
 
+  const submitting = createProcessItemMutation.isPending || updateProcessItemMutation.isPending;
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
-    setSubmitting(true);
 
     const params = {
       direction,
@@ -1539,17 +1457,13 @@ function ProcessItemDialog({
 
     try {
       if (item) {
-        const updated = await updateProcessItem(projectId, item.id, params);
-        onSaved(updated, item);
+        await updateProcessItemMutation.mutateAsync({ itemId: item.id, params });
       } else {
-        const created = await createProcessItem(projectId, params);
-        onSaved(created);
+        await createProcessItemMutation.mutateAsync(params);
       }
       onOpenChange(false);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Une erreur est survenue");
-    } finally {
-      setSubmitting(false);
     }
   }
 

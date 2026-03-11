@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getCompany, updateCompany, type Company } from "@/api/company";
+import { useCompany, useUpdateCompany } from "@/hooks/useCompany";
 import { EMPLOYEE_RANGES, REVENUE_RANGES } from "@/lib/company-options";
 import { ApiError } from "@/api/client";
 import { CheckCircle2 } from "lucide-react";
@@ -19,10 +19,26 @@ import AppLayout from "@/components/AppLayout";
 import NafCombobox from "@/components/NafCombobox";
 import AddressAutocomplete, { type AddressResult } from "@/components/AddressAutocomplete";
 
+function companyToForm(c: { name: string; siren: string; activity_description: string | null; naf_code: string; naf_label: string; street: string | null; postal_code: string | null; city: string | null; department: string | null; region: string | null; employee_range: string; annual_revenue_range: string }) {
+  return {
+    name: c.name,
+    siren: c.siren,
+    activity_description: c.activity_description ?? "",
+    naf_code: c.naf_code,
+    naf_label: c.naf_label,
+    street: c.street ?? "",
+    postal_code: c.postal_code ?? "",
+    city: c.city ?? "",
+    department: c.department ?? "",
+    region: c.region ?? "",
+    employee_range: c.employee_range,
+    annual_revenue_range: c.annual_revenue_range,
+  };
+}
+
 export default function SettingsPage() {
-  const [company, setCompany] = useState<Company | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const { data: company, isLoading: loading } = useCompany();
+  const updateCompanyMutation = useUpdateCompany();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [form, setForm] = useState({
@@ -40,33 +56,18 @@ export default function SettingsPage() {
     annual_revenue_range: "",
   });
   const [initialForm, setInitialForm] = useState(form);
+  const [formInitialized, setFormInitialized] = useState(false);
 
   const hasChanges = JSON.stringify(form) !== JSON.stringify(initialForm);
 
   useEffect(() => {
-    getCompany()
-      .then((c) => {
-        setCompany(c);
-        const formData = {
-          name: c.name,
-          siren: c.siren,
-          activity_description: c.activity_description ?? "",
-          naf_code: c.naf_code,
-          naf_label: c.naf_label,
-          street: c.street ?? "",
-          postal_code: c.postal_code ?? "",
-          city: c.city ?? "",
-          department: c.department ?? "",
-          region: c.region ?? "",
-          employee_range: c.employee_range,
-          annual_revenue_range: c.annual_revenue_range,
-        };
-        setForm(formData);
-        setInitialForm(formData);
-      })
-      .catch(() => setCompany(null))
-      .finally(() => setLoading(false));
-  }, []);
+    if (company && !formInitialized) {
+      const formData = companyToForm(company);
+      setForm(formData); // eslint-disable-line react-hooks/set-state-in-effect -- sync server state to form once on load
+      setInitialForm(formData); // eslint-disable-line react-hooks/set-state-in-effect
+      setFormInitialized(true); // eslint-disable-line react-hooks/set-state-in-effect
+    }
+  }, [company, formInitialized]);
 
   function update(field: string, value: string | boolean) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -77,10 +78,9 @@ export default function SettingsPage() {
     e.preventDefault();
     setError("");
     setSuccess(false);
-    setSaving(true);
 
     try {
-      const updated = await updateCompany({
+      const updated = await updateCompanyMutation.mutateAsync({
         ...form,
         activity_description: form.activity_description || undefined,
         street: form.street || undefined,
@@ -89,28 +89,12 @@ export default function SettingsPage() {
         department: form.department || undefined,
         region: form.region || undefined,
       });
-      setCompany(updated);
-      const updatedForm = {
-        name: updated.name,
-        siren: updated.siren,
-        activity_description: updated.activity_description ?? "",
-        naf_code: updated.naf_code,
-        naf_label: updated.naf_label,
-        street: updated.street ?? "",
-        postal_code: updated.postal_code ?? "",
-        city: updated.city ?? "",
-        department: updated.department ?? "",
-        region: updated.region ?? "",
-        employee_range: updated.employee_range,
-        annual_revenue_range: updated.annual_revenue_range,
-      };
+      const updatedForm = companyToForm(updated);
       setForm(updatedForm);
       setInitialForm(updatedForm);
       setSuccess(true);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Une erreur est survenue");
-    } finally {
-      setSaving(false);
     }
   }
 
@@ -269,9 +253,9 @@ export default function SettingsPage() {
             <Button
               type="submit"
               className="bg-emerald-600 hover:bg-emerald-700"
-              disabled={saving || !hasChanges}
+              disabled={updateCompanyMutation.isPending || !hasChanges}
             >
-              {saving ? "Enregistrement..." : "Enregistrer les modifications"}
+              {updateCompanyMutation.isPending ? "Enregistrement..." : "Enregistrer les modifications"}
             </Button>
           </form>
         </CardContent>
