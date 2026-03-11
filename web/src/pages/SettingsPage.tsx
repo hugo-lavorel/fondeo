@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,36 +38,36 @@ function companyToForm(c: { name: string; siren: string; activity_description: s
 
 export default function SettingsPage() {
   const { data: company, isLoading: loading } = useCompany();
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex justify-center py-12">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!company) {
+    return (
+      <AppLayout>
+        <p className="text-muted-foreground">Aucune entreprise trouvee.</p>
+      </AppLayout>
+    );
+  }
+
+  return <SettingsForm company={company} />;
+}
+
+function SettingsForm({ company }: { company: Parameters<typeof companyToForm>[0] }) {
   const updateCompanyMutation = useUpdateCompany();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-  const [form, setForm] = useState({
-    name: "",
-    siren: "",
-    activity_description: "",
-    naf_code: "",
-    naf_label: "",
-    street: "",
-    postal_code: "",
-    city: "",
-    department: "",
-    region: "",
-    employee_range: "",
-    annual_revenue_range: "",
-  });
-  const [initialForm, setInitialForm] = useState(form);
-  const [formInitialized, setFormInitialized] = useState(false);
+  const [form, setForm] = useState(() => companyToForm(company));
+  const [initialForm, setInitialForm] = useState(() => companyToForm(company));
 
   const hasChanges = JSON.stringify(form) !== JSON.stringify(initialForm);
-
-  useEffect(() => {
-    if (company && !formInitialized) {
-      const formData = companyToForm(company);
-      setForm(formData); // eslint-disable-line react-hooks/set-state-in-effect -- sync server state to form once on load
-      setInitialForm(formData); // eslint-disable-line react-hooks/set-state-in-effect
-      setFormInitialized(true); // eslint-disable-line react-hooks/set-state-in-effect
-    }
-  }, [company, formInitialized]);
 
   function update(field: string, value: string | boolean) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -96,24 +96,6 @@ export default function SettingsPage() {
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Une erreur est survenue");
     }
-  }
-
-  if (loading) {
-    return (
-      <AppLayout>
-        <div className="flex justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
-        </div>
-      </AppLayout>
-    );
-  }
-
-  if (!company) {
-    return (
-      <AppLayout>
-        <p className="text-muted-foreground">Aucune entreprise trouvee.</p>
-      </AppLayout>
-    );
   }
 
   return (
