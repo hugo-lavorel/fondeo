@@ -2,7 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -18,6 +18,7 @@ import { ApiError } from "@/api/client";
 type AuthContextType = {
   user: User | null;
   loading: boolean;
+  ensureAuth: () => void;
   login: (email: string, password: string) => Promise<void>;
   signup: (params: {
     email: string;
@@ -34,9 +35,13 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const checkedRef = useRef(false);
 
-  useEffect(() => {
+  const ensureAuth = useCallback(() => {
+    if (checkedRef.current) return;
+    checkedRef.current = true;
+    setLoading(true);
     getCurrentUser()
       .then(setUser)
       .catch(() => setUser(null))
@@ -81,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, ensureAuth, login, signup, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
