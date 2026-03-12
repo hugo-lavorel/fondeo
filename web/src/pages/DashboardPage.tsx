@@ -20,7 +20,9 @@ import {
   CalendarDays,
   Building,
   User,
+  Pencil,
 } from "lucide-react";
+import EditCompanyDialog from "@/components/EditCompanyDialog";
 import AppLayout from "@/components/AppLayout";
 
 export default function DashboardPage() {
@@ -54,8 +56,15 @@ export default function DashboardPage() {
 
 function CompanyCards({ company }: { company: Company }) {
   return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-semibold">Votre entreprise</h2>
+    <div className="group/company space-y-4">
+      <div className="flex items-center gap-2">
+        <h2 className="text-lg font-semibold">Votre entreprise</h2>
+        <EditCompanyDialog company={company}>
+          <button className="rounded-md p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-muted hover:text-foreground group-hover/company:opacity-100">
+            <Pencil className="h-4 w-4" />
+          </button>
+        </EditCompanyDialog>
+      </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">

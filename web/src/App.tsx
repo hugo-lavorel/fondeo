@@ -9,7 +9,6 @@ import LoginPage from "@/pages/LoginPage"
 import SignupPage from "@/pages/SignupPage"
 import DashboardPage from "@/pages/DashboardPage"
 import OnboardingPage from "@/pages/OnboardingPage"
-import SettingsPage from "@/pages/SettingsPage"
 import ProjectPage from "@/pages/ProjectPage"
 import NewProjectPage from "@/pages/NewProjectPage"
 
@@ -51,14 +50,6 @@ function App() {
             element={
               <ProtectedRoute>
                 <ProjectPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <SettingsPage />
               </ProtectedRoute>
             }
           />

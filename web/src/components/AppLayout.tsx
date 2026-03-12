@@ -1,11 +1,10 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { LogOut, LayoutDashboard, Settings, Sparkles } from "lucide-react";
+import { LogOut, LayoutDashboard, Sparkles } from "lucide-react";
 
 const NAV_ITEMS = [
   { to: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
-  { to: "/settings", label: "Parametres", icon: Settings },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
