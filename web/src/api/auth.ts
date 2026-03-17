@@ -14,6 +14,7 @@ type SignupParams = {
   password_confirmation: string;
   first_name: string;
   last_name: string;
+  invite_token: string;
 };
 
 type LoginParams = {
@@ -22,9 +23,10 @@ type LoginParams = {
 };
 
 export function signup(params: SignupParams) {
+  const { invite_token, ...user } = params;
   return api<User>("/api/v1/signup", {
     method: "POST",
-    body: { user: params },
+    body: { user, invite_token },
   });
 }
 

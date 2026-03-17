@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,8 @@ import { ApiError } from "@/api/client";
 export default function SignupPage() {
   const { signup } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const inviteToken = searchParams.get("token") ?? "";
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
@@ -36,7 +38,7 @@ export default function SignupPage() {
 
     setSubmitting(true);
     try {
-      await signup(form);
+      await signup({ ...form, invite_token: inviteToken });
       navigate("/onboarding");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Une erreur est survenue");
