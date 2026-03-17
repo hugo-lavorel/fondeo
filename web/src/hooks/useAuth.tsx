@@ -67,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password_confirmation: string;
       first_name: string;
       last_name: string;
+      invite_token: string;
     }) => {
       const user = await apiSignup(params);
       setUser(user);
