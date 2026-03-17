@@ -25,3 +25,6 @@ db/*.sqlite3-*
 
 # Assets
 public/assets/
+# Ignore key files for decrypting credentials and more.
+/config/*.key
+
