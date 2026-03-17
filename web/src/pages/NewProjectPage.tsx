@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { VoiceTextarea } from "@/components/VoiceTextarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -359,30 +359,33 @@ function StepGeneral({
       </div>
       <div className="space-y-2">
         <Label htmlFor="objective">Objectif du projet</Label>
-        <Textarea
+        <VoiceTextarea
           id="objective"
           value={form.objective}
           onChange={(e) => update("objective", e.target.value)}
+          onValueChange={(v) => update("objective", v)}
           placeholder="Decrivez les objectifs principaux du projet, les resultats attendus et l'impact envisage."
           rows={5}
         />
       </div>
       <div className="space-y-2">
         <Label htmlFor="process_before">Procede de fabrication avant projet</Label>
-        <Textarea
+        <VoiceTextarea
           id="process_before"
           value={form.process_before}
           onChange={(e) => update("process_before", e.target.value)}
+          onValueChange={(v) => update("process_before", v)}
           placeholder="Detaillez le procede de fabrication actuel, avant la mise en oeuvre du projet."
           rows={4}
         />
       </div>
       <div className="space-y-2">
         <Label htmlFor="process_after">Procede de fabrication apres projet</Label>
-        <Textarea
+        <VoiceTextarea
           id="process_after"
           value={form.process_after}
           onChange={(e) => update("process_after", e.target.value)}
+          onValueChange={(v) => update("process_after", v)}
           placeholder="Detaillez le procede de fabrication envisage apres la mise en oeuvre du projet."
           rows={4}
         />
@@ -961,10 +964,11 @@ function StepPermit({
 
             <div className="space-y-2">
               <Label htmlFor="usage">Usage prevu</Label>
-              <Textarea
+              <VoiceTextarea
                 id="usage"
                 value={form.permit_usage_description}
                 onChange={(e) => update("permit_usage_description", e.target.value)}
+                onValueChange={(v) => update("permit_usage_description", v)}
                 placeholder="Ex: Entrepot logistique, bureaux, atelier de production..."
                 rows={2}
               />

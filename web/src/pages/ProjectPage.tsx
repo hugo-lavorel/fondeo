@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { VoiceTextarea } from "@/components/VoiceTextarea";
 import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
@@ -631,28 +631,31 @@ function EditGeneralDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor="edit-objective">Objectif</Label>
-            <Textarea
+            <VoiceTextarea
               id="edit-objective"
               value={objective}
               onChange={(e) => setObjective(e.target.value)}
+              onValueChange={setObjective}
               rows={5}
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="edit-process-before">Procede de fabrication avant projet</Label>
-            <Textarea
+            <VoiceTextarea
               id="edit-process-before"
               value={processBefore}
               onChange={(e) => setProcessBefore(e.target.value)}
+              onValueChange={setProcessBefore}
               rows={4}
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="edit-process-after">Procede de fabrication apres projet</Label>
-            <Textarea
+            <VoiceTextarea
               id="edit-process-after"
               value={processAfter}
               onChange={(e) => setProcessAfter(e.target.value)}
+              onValueChange={setProcessAfter}
               rows={4}
             />
           </div>
@@ -979,7 +982,7 @@ function EditPermitDialog({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-usage">Usage prevu</Label>
-                <Textarea id="edit-usage" value={usageDesc} onChange={(e) => setUsageDesc(e.target.value)} rows={2} />
+                <VoiceTextarea id="edit-usage" value={usageDesc} onChange={(e) => setUsageDesc(e.target.value)} onValueChange={setUsageDesc} rows={2} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-ws">Date de debut des travaux</Label>

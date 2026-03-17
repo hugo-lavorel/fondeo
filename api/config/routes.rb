@@ -6,6 +6,7 @@ Rails.application.routes.draw do
       delete "logout", to: "sessions#destroy"
       get "me", to: "current_user#show"
 
+      post "transcriptions", to: "transcriptions#create"
       resource :company, only: [ :show, :create, :update ]
       resources :projects do
         resources :expenses, only: [ :index, :create, :update, :destroy ]

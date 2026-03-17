@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { VoiceTextarea } from "@/components/VoiceTextarea";
 import {
   Select,
   SelectContent,
@@ -196,10 +196,11 @@ export default function OnboardingPage() {
                 Activite principale{" "}
                 <span className="font-normal text-muted-foreground">(optionnel)</span>
               </Label>
-              <Textarea
+              <VoiceTextarea
                 id="activity_description"
                 value={form.activity_description}
                 onChange={(e) => update("activity_description", e.target.value)}
+                onValueChange={(v) => update("activity_description", v)}
                 placeholder="Decrivez en quelques lignes l'activite principale de votre entreprise. Ce texte sera reutilise dans vos dossiers de subvention."
                 rows={3}
               />
