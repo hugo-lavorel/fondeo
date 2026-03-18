@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useUpdateCompany } from "@/hooks/useCompany";
-import { EMPLOYEE_RANGES, REVENUE_RANGES } from "@/lib/company-options";
+import { EMPLOYEE_RANGES, REVENUE_RANGES, BALANCE_SHEET_RANGES } from "@/lib/company-options";
 import { ApiError } from "@/api/client";
 import type { Company } from "@/api/company";
 import { CheckCircle2 } from "lucide-react";
@@ -39,6 +39,7 @@ function companyToForm(c: Company) {
     region: c.region ?? "",
     employee_range: c.employee_range,
     annual_revenue_range: c.annual_revenue_range,
+    balance_sheet_range: c.balance_sheet_range,
   };
 }
 
@@ -204,6 +205,25 @@ export default function EditCompanyDialog({
               </SelectTrigger>
               <SelectContent>
                 {REVENUE_RANGES.map((r) => (
+                  <SelectItem key={r.value} value={r.value}>
+                    {r.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="company-balance-sheet-range">Bilan total</Label>
+            <Select
+              value={form.balance_sheet_range}
+              onValueChange={(v) => update("balance_sheet_range", v)}
+            >
+              <SelectTrigger id="company-balance-sheet-range">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {BALANCE_SHEET_RANGES.map((r) => (
                   <SelectItem key={r.value} value={r.value}>
                     {r.label}
                   </SelectItem>

@@ -6,7 +6,7 @@ import { useCompany } from "@/hooks/useCompany";
 import { useProjects } from "@/hooks/useProjects";
 import type { Company } from "@/api/company";
 import type { Project } from "@/api/projects";
-import { labelFor, EMPLOYEE_RANGES, REVENUE_RANGES } from "@/lib/company-options";
+import { labelFor, EMPLOYEE_RANGES, REVENUE_RANGES, CATEGORY_LABELS } from "@/lib/company-options";
 import {
   Building2,
   Users,
@@ -140,6 +140,23 @@ function CompanyCards({ company }: { company: Company }) {
             <p className="text-xs text-muted-foreground">annuel</p>
           </CardContent>
         </Card>
+
+        {company.company_category && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Categorie
+              </CardTitle>
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl font-bold">
+                {labelFor(CATEGORY_LABELS, company.company_category)}
+              </div>
+              <p className="text-xs text-muted-foreground">taille d'entreprise</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

@@ -10,14 +10,16 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_08_123932) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_17_223626) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
   create_table "companies", force: :cascade do |t|
     t.text "activity_description"
     t.string "annual_revenue_range", null: false
+    t.string "balance_sheet_range", null: false
     t.string "city"
+    t.string "company_category"
     t.datetime "created_at", null: false
     t.string "department"
     t.string "employee_range", null: false

@@ -16,7 +16,7 @@ import { Building2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { createCompany } from "@/api/company";
 import { ApiError } from "@/api/client";
-import { EMPLOYEE_RANGES, REVENUE_RANGES } from "@/lib/company-options";
+import { EMPLOYEE_RANGES, REVENUE_RANGES, BALANCE_SHEET_RANGES } from "@/lib/company-options";
 import NafCombobox from "@/components/NafCombobox";
 import AddressAutocomplete, { type AddressResult } from "@/components/AddressAutocomplete";
 
@@ -38,6 +38,7 @@ export default function OnboardingPage() {
     region: "",
     employee_range: "",
     annual_revenue_range: "",
+    balance_sheet_range: "",
   });
 
   function update(field: string, value: string | boolean) {
@@ -183,6 +184,26 @@ export default function OnboardingPage() {
                 </SelectTrigger>
                 <SelectContent>
                   {REVENUE_RANGES.map((r) => (
+                    <SelectItem key={r.value} value={r.value}>
+                      {r.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="balance_sheet_range">Bilan total</Label>
+              <Select
+                value={form.balance_sheet_range}
+                onValueChange={(v) => update("balance_sheet_range", v)}
+                required
+              >
+                <SelectTrigger id="balance_sheet_range">
+                  <SelectValue placeholder="Selectionnez une tranche" />
+                </SelectTrigger>
+                <SelectContent>
+                  {BALANCE_SHEET_RANGES.map((r) => (
                     <SelectItem key={r.value} value={r.value}>
                       {r.label}
                     </SelectItem>

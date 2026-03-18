@@ -9,6 +9,8 @@ export type Company = {
   naf_label: string;
   employee_range: string;
   annual_revenue_range: string;
+  balance_sheet_range: string;
+  company_category: string | null;
   street: string | null;
   postal_code: string | null;
   city: string | null;
@@ -24,6 +26,7 @@ export type CreateCompanyParams = {
   naf_label: string;
   employee_range: string;
   annual_revenue_range: string;
+  balance_sheet_range: string;
   street?: string;
   postal_code?: string;
   city?: string;

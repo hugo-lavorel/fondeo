@@ -2,8 +2,10 @@ class Company < ApplicationRecord
   has_many :users, dependent: :nullify
   has_many :projects, dependent: :destroy
 
-  EMPLOYEE_RANGES = %w[lt_10 10_49 50_249 250_plus].freeze
-  REVENUE_RANGES = %w[lt_2m 2m_10m 10m_50m 50m_plus].freeze
+  EMPLOYEE_RANGES      = %w[lt_10 10_249 250_4999 5000_plus].freeze
+  REVENUE_RANGES       = %w[lt_2m 2m_50m 50m_1500m 1500m_plus].freeze
+  BALANCE_SHEET_RANGES = %w[lt_2m 2m_43m 43m_2000m 2000m_plus].freeze
+  CATEGORIES           = %w[tpe pme eti grande_entreprise].freeze
 
   normalizes :siren, with: ->(siren) { siren.gsub(/\s/, "") }
 
@@ -14,4 +16,5 @@ class Company < ApplicationRecord
   validates :naf_label, presence: true
   validates :employee_range, presence: true, inclusion: { in: EMPLOYEE_RANGES }
   validates :annual_revenue_range, presence: true, inclusion: { in: REVENUE_RANGES }
+  validates :balance_sheet_range, presence: true, inclusion: { in: BALANCE_SHEET_RANGES }
 end

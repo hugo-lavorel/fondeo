@@ -10,6 +10,7 @@ module Api
         end
 
         company = Company.new(company_params)
+        company.company_category = CompanyCategoryService.call(company)
 
         if company.save
           current_user.update!(company: company)
@@ -37,7 +38,10 @@ module Api
           return
         end
 
-        if company.update(company_params)
+        company.assign_attributes(company_params)
+        company.company_category = CompanyCategoryService.call(company)
+
+        if company.save
           render json: company_json(company)
         else
           render json: { errors: company.errors.full_messages }, status: :unprocessable_entity
@@ -49,7 +53,7 @@ module Api
       def company_params
         params.require(:company).permit(
           :name, :siren, :activity_description, :naf_code, :naf_label,
-          :employee_range, :annual_revenue_range,
+          :employee_range, :annual_revenue_range, :balance_sheet_range,
           :street, :postal_code, :city, :department, :region
         )
       end
@@ -64,6 +68,8 @@ module Api
           naf_label: company.naf_label,
           employee_range: company.employee_range,
           annual_revenue_range: company.annual_revenue_range,
+          balance_sheet_range: company.balance_sheet_range,
+          company_category: company.company_category,
           street: company.street,
           postal_code: company.postal_code,
           city: company.city,
