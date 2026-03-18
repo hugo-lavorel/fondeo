@@ -11,6 +11,7 @@ import DashboardPage from "@/pages/DashboardPage"
 import OnboardingPage from "@/pages/OnboardingPage"
 import ProjectPage from "@/pages/ProjectPage"
 import NewProjectPage from "@/pages/NewProjectPage"
+import AccountPage from "@/pages/AccountPage"
 
 function App() {
   return (
@@ -34,6 +35,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/account"
+            element={
+              <ProtectedRoute>
+                <AccountPage />
               </ProtectedRoute>
             }
           />

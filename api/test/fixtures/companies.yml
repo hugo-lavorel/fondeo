@@ -1,0 +1,8 @@
+acme:
+  name: Acme Agro
+  siren: "123456789"
+  naf_code: "10.11A"
+  naf_label: Fabrication de viandes
+  employee_range: 10_249
+  annual_revenue_range: 2m_50m
+  balance_sheet_range: 2m_43m

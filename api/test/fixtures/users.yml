@@ -1,0 +1,6 @@
+alice:
+  first_name: Alice
+  last_name: Smith
+  email: alice@example.com
+  password_digest: <%= BCrypt::Password.create("ValidPass123") %>
+  company: acme

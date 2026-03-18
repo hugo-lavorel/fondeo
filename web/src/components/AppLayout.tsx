@@ -45,9 +45,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <span className="hidden text-sm text-muted-foreground sm:inline">
+            <Link
+              to="/account"
+              className="hidden text-sm text-muted-foreground hover:text-foreground hover:underline sm:inline"
+            >
               {user?.first_name} {user?.last_name}
-            </span>
+            </Link>
             <Button variant="ghost" size="sm" onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
               <span className="hidden sm:inline">Deconnexion</span>

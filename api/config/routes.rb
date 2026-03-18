@@ -6,6 +6,9 @@ Rails.application.routes.draw do
       delete "logout", to: "sessions#destroy"
       get "me", to: "current_user#show"
 
+      resource :account, only: [ :update, :destroy ] do
+        patch :password, on: :collection, action: :update_password
+      end
       post "transcriptions", to: "transcriptions#create"
       resource :company, only: [ :show, :create, :update ]
       resources :projects do
